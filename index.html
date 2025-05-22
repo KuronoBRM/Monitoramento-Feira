@@ -6,6 +6,9 @@
   <title>Monitor da Feira</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Firebase SDK compatível com GitHub Pages -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 </head>
 <body class="bg-gray-50 min-h-screen">
   <div id="app" class="container mx-auto px-4 py-8">
@@ -34,6 +37,18 @@
   </div>
 
   <script>
+    // Inicialização Firebase compatível com GitHub Pages
+    const firebaseConfig = {
+      apiKey: "AIzaSyD5it16gSBJzscHWl6kx7OT-nNi0I4ZmOU",
+      authDomain: "monitor-feira.firebaseapp.com",
+      projectId: "monitor-feira",
+      storageBucket: "monitor-feira.appspot.com",
+      messagingSenderId: "184193785808",
+      appId: "1:184193785808:web:63782374815818986163d5",
+      databaseURL: "https://monitor-feira-default-rtdb.firebaseio.com/"
+    };
+    firebase.initializeApp(firebaseConfig);
+
     let routers = [];
     let isAdmin = false;
     let adminCredentials = {
@@ -42,13 +57,11 @@
     };
 
     let routersRef;
-    let auth;
 
     document.addEventListener('DOMContentLoaded', () => {
-      routersRef = firebase.ref(firebase.database, 'routers');
-      auth = firebase.auth;
+      routersRef = firebase.database().ref('routers');
 
-      firebase.onValue(routersRef, (snapshot) => {
+      routersRef.on('value', (snapshot) => {
         const data = snapshot.val();
         routers = data ? Object.entries(data).map(([key, value]) => ({ id: key, ...value })) : [];
         renderRouters();
