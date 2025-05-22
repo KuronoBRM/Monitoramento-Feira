@@ -279,8 +279,7 @@
                         <div class="stat-desc text-xs"><span id="recolhidoPercent">0</span>% inativos</div>
                     </div>
                 </div>
-
-                </div>
+            </div>
 
             <div class="mb-5 flex flex-col sm:flex-row items-center gap-3 w-full"> 
                 <div class="relative w-full sm:w-60"> 
@@ -572,6 +571,7 @@
         function addEventListeners() {
             // Toggle status
             document.querySelectorAll('.status-toggle').forEach(toggle => {
+                // Remove listener antes de adicionar para evitar duplicatas
                 toggle.removeEventListener('change', handleStatusToggle); 
                 toggle.addEventListener('change', function() { handleStatusToggle(this.dataset.id, this.checked); });
             });
