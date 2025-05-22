@@ -6,21 +6,26 @@
   <title>Monitor da Feira</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <!-- Firebase SDK compatível com GitHub Pages -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 </head>
 <body class="bg-gray-50 min-h-screen">
   <div id="app" class="container mx-auto px-4 py-8">
-    <div id="mainContent" class="hidden">
+    <div class="flex justify-end mb-4">
+      <button id="adminLoginBtn" class="bg-gray-300 px-4 py-2 rounded">Admin</button>
+    </div>
+    <div id="mainContent">
       <header class="mb-10 text-center">
         <h1 class="text-4xl font-bold text-gray-800 mb-2">Monitor da Feira</h1>
         <p class="text-gray-600">Controle dos roteadores e configurações de WiFi</p>
       </header>
+      <div class="flex justify-end mb-4 hidden" id="adminControls">
+        <button id="addRouterBtn" class="bg-green-500 text-white px-4 py-2 rounded">Adicionar Roteador</button>
+      </div>
       <div id="routersContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
     </div>
-    <div id="loginScreen" class="flex items-center justify-center min-h-screen">
-      <div class="login-form bg-white p-6 rounded shadow-md">
+    <div id="loginScreen" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="login-form bg-white p-6 rounded shadow-md w-full max-w-sm">
         <h2 class="text-2xl font-bold mb-4">Login Admin</h2>
         <div class="mb-4">
           <label class="block mb-1">Email</label>
@@ -31,13 +36,13 @@
           <input id="loginPassword" class="w-full border px-3 py-2 rounded" type="password" />
         </div>
         <button id="loginBtn" class="bg-blue-500 text-white px-4 py-2 rounded">Entrar</button>
+        <button id="closeLoginBtn" class="ml-2 text-sm text-gray-600">Cancelar</button>
         <div id="loginError" class="text-red-500 mt-2 hidden"></div>
       </div>
     </div>
   </div>
 
   <script>
-    // Inicialização Firebase compatível com GitHub Pages
     const firebaseConfig = {
       apiKey: "AIzaSyD5it16gSBJzscHWl6kx7OT-nNi0I4ZmOU",
       authDomain: "monitor-feira.firebaseapp.com",
@@ -51,28 +56,62 @@
 
     let routers = [];
     let isAdmin = false;
-    let adminCredentials = {
+    const adminCredentials = {
       email: "admin@monitor.com",
       password: "cgrplena@2025!"
     };
 
-    let routersRef;
+    const routersRef = firebase.database().ref('routers');
 
     document.addEventListener('DOMContentLoaded', () => {
-      routersRef = firebase.database().ref('routers');
-
-      routersRef.on('value', (snapshot) => {
+      routersRef.on('value', snapshot => {
         const data = snapshot.val();
-        routers = data ? Object.entries(data).map(([key, value]) => ({ id: key, ...value })) : [];
+        routers = data ? Object.entries(data).map(([id, val]) => ({ id, ...val })) : [];
         renderRouters();
       });
 
-      init();
-    });
+      document.getElementById('adminLoginBtn').addEventListener('click', () => {
+        document.getElementById('loginScreen').classList.remove('hidden');
+      });
 
-    function init() {
-      document.getElementById('mainContent').classList.remove('hidden');
-    }
+      document.getElementById('closeLoginBtn').addEventListener('click', () => {
+        document.getElementById('loginScreen').classList.add('hidden');
+      });
+
+      document.getElementById('loginBtn').addEventListener('click', () => {
+        const email = document.getElementById('loginEmail').value.trim();
+        const password = document.getElementById('loginPassword').value.trim();
+        const errorBox = document.getElementById('loginError');
+
+        if (email === adminCredentials.email && password === adminCredentials.password) {
+          isAdmin = true;
+          document.getElementById('loginScreen').classList.add('hidden');
+          document.getElementById('adminControls').classList.remove('hidden');
+          renderRouters();
+        } else {
+          errorBox.textContent = 'Credenciais inválidas';
+          errorBox.classList.remove('hidden');
+        }
+      });
+
+      document.getElementById('addRouterBtn').addEventListener('click', () => {
+        const name = prompt('Nome do roteador:');
+        const ssid = prompt('SSID:');
+        const password = prompt('Senha WiFi:');
+        const status = confirm('Está em uso? OK = Sim / Cancelar = Não');
+
+        if (name && ssid) {
+          const newRef = routersRef.push();
+          newRef.set({
+            name,
+            ssid,
+            password,
+            status,
+            lastUpdate: new Date().toISOString()
+          });
+        }
+      });
+    });
 
     function renderRouters() {
       const container = document.getElementById('routersContainer');
@@ -89,21 +128,6 @@
         container.appendChild(el);
       });
     }
-
-    document.getElementById('loginBtn').addEventListener('click', () => {
-      const email = document.getElementById('loginEmail').value.trim();
-      const password = document.getElementById('loginPassword').value.trim();
-      const errorBox = document.getElementById('loginError');
-
-      if (email === adminCredentials.email && password === adminCredentials.password) {
-        isAdmin = true;
-        document.getElementById('loginScreen').classList.add('hidden');
-        document.getElementById('mainContent').classList.remove('hidden');
-      } else {
-        errorBox.textContent = 'Credenciais inválidas';
-        errorBox.classList.remove('hidden');
-      }
-    });
   </script>
 </body>
 </html>
