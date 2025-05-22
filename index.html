@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monitor da Feira</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Firebase SDK -->
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
+        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
+        import { getAuth, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
+        
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyD5it16gSBJzscHWl6kx7OT-nNi0I4ZmOU",
+            authDomain: "monitor-feira.firebaseapp.com",
+            projectId: "monitor-feira",
+            storageBucket: "monitor-feira.appspot.com",
+            messagingSenderId: "184193785808",
+            appId: "1:184193785808:web:63782374815818986163d5",
+            databaseURL: "https://monitor-feira-default-rtdb.firebaseio.com/"
+        };
+        
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+        const auth = getAuth(app);
+        
+        // Make Firebase available globally
+        window.firebase = {
+            database,
+            auth,
+            ref,
+            set,
+            onValue,
+            signInWithEmailAndPassword,
+            signOut
+        };
+    </script>
+    <style>
+        .status-card {
+            transition: all 0.3s ease;
+            transform-style: preserve-3d;
+        }
+        .status-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        .em-uso {
+            background-color: rgba(74, 222, 128, 0.1);
+            border-left: 4px solid #4ade80;
+        }
+        .recolhido {
+            background-color: rgba(248, 113, 113, 0.1);
+            border-left: 4px solid #f87171;
+        }
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: #4ade80;
+        }
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(74, 222, 128, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(74, 222, 128, 0);
+            }
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .password-field {
+            position: relative;
+        }
+        .toggle-password {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #6b7280;
+        }
+        .login-form {
+            max-width: 400px;
+            margin: 0 auto;
+            background: white;
+            padding: 2rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .placeholder-dots::placeholder {
+            letter-spacing: 2px;
+            color: #9ca3af;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div id="app" class="container mx-auto px-4 py-8">
+        <!-- Tela de login (inicialmente visível apenas para admin) -->
+        <div id="loginScreen" class="hidden items-center justify-center min-h-screen">
+            <div class="login-form">
+                <h2 class="text-2xl font-bold text-center mb-6">Acesso Administrativo</h2>
+                <div id="loginError" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4"></div>
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="loginEmail">
+                        Usuário
+                    </label>
+                    <input id="loginEmail" class="placeholder-dots shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" type="text" placeholder="••••••">
+                </div>
+                <div class="mb-6 password-field">
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="loginPassword">
+                        Senha
+                    </label>
+                    <input id="loginPassword" class="placeholder-dots shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" type="password" placeholder="••••••••••">
+                    <span class="toggle-password" onclick="togglePasswordVisibility(this)">
+                        <i class="fas fa-eye"></i>
+                    </span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <button id="loginBtn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                        Entrar
+                    </button>
+                    <button id="publicViewBtn" class="text-blue-600 hover:text-blue-800 font-medium">
+                        Visualização Pública
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Conteúdo principal (sempre visível para todos) -->
+        <div id="mainContent">
+            <header class="mb-10 text-center">
+                <div class="flex justify-between items-center mb-4">
+                    <h1 class="text-4xl font-bold text-gray-800 mb-2">Monitor da Feira</h1>
+                    <button id="adminLoginBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline hidden">
+                        <i class="fas fa-lock mr-2"></i>Acesso Admin
+                    </button>
+                </div>
+                <p class="text-gray-600">Controle dos roteadores e configurações de WiFi</p>
+                <div class="mt-6 flex justify-center gap-4">
+                    <div class="flex items-center">
+                        <div class="w-4 h-4 rounded-full bg-green-500 mr-2"></div>
+                        <span class="text-sm">Em Uso</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-4 h-4 rounded-full bg-red-500 mr-2"></div>
+                        <span class="text-sm">Recolhido</span>
+                    </div>
+                </div>
+            </header>
+
+            <div class="mb-8 flex flex-col md:flex-row justify-between items-center gap-4">
+                <div class="stats shadow bg-white p-4 rounded-lg w-full md:w-auto">
+                    <div class="stat">
+                        <div class="stat-title">Total de Roteadores</div>
+                        <div class="stat-value text-indigo-600" id="totalRouters">0</div>
+                        <div class="stat-desc">Dispositivos cadastrados</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-title">Em Uso</div>
+                        <div class="stat-value text-green-600" id="emUsoCount">0</div>
+                        <div class="stat-desc"><span id="emUsoPercent">0</span>% operando</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-title">Recolhido</div>
+                        <div class="stat-value text-red-600" id="recolhidoCount">0</div>
+                        <div class="stat-desc"><span id="recolhidoPercent">0</span>% inativos</div>
+                    </div>
+                </div>
+
+                <div class="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
+                    <div id="adminControls" class="hidden flex gap-2 w-full">
+                        <button id="addRouterBtn" class="btn bg-indigo-600 text-white hover:bg-indigo-700 flex items-center gap-2 w-full md:w-auto">
+                            <i class="fas fa-plus"></i> Adicionar Roteador
+                        </button>
+                        <button id="logoutBtn" class="btn bg-gray-600 text-white hover:bg-gray-700 flex items-center gap-2 w-full md:w-auto">
+                            <i class="fas fa-sign-out-alt"></i> Sair
+                        </button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="routersContainer">
+                <!-- Roteadores serão adicionados aqui dinamicamente -->
+            </div>
+
+            <!-- Modal para adicionar novo roteador -->
+            <div id="addRouterModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+                <div class="bg-white rounded-lg p-6 w-full max-w-md">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-bold">Adicionar Novo Roteador</h3>
+                        <button id="closeModalBtn" class="text-gray-500 hover:text-gray-700">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-500 mb-1">Nome do Roteador</label>
+                            <input type="text" id="routerNameInput" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-500 mb-1">SSID</label>
+                            <input type="text" id="routerSSIDInput" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        <div class="password-field">
+                            <label class="block text-sm font-medium text-gray-500 mb-1">Senha WiFi</label>
+                            <input type="password" id="routerPasswordInput" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <span class="toggle-password" onclick="togglePasswordVisibility(this)">
+                                <i class="fas fa-eye"></i>
+                            </span>
+                        </div>
+                        <div class="flex items-center">
+                            <label class="block text-sm font-medium text-gray-700 mr-2">Status:</label>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="routerStatusInput" checked>
+                                <span class="slider"></span>
+                            </label>
+                            <span class="ml-2 text-sm" id="statusLabel">Em Uso</span>
+                        </div>
+                    </div>
+                    <div class="mt-6 flex justify-end gap-3">
+                        <button id="cancelAddRouterBtn" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">Cancelar</button>
+                        <button id="confirmAddRouterBtn" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Adicionar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Elementos do DOM
+        const appElement = document.getElementById('app');
+        const loginScreen = document.getElementById('loginScreen');
+        const mainContent = document.getElementById('mainContent');
+        const loginBtn = document.getElementById('loginBtn');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const loginEmail = document.getElementById('loginEmail');
+        const loginPassword = document.getElementById('loginPassword');
+        const loginError = document.getElementById('loginError');
+        const adminControls = document.getElementById('adminControls');
+        const adminLoginBtn = document.getElementById('adminLoginBtn');
+        const publicViewBtn = document.getElementById('publicViewBtn');
+        
+        const routersContainer = document.getElementById('routersContainer');
+        const addRouterBtn = document.getElementById('addRouterBtn');
+        const addRouterModal = document.getElementById('addRouterModal');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+        const cancelAddRouterBtn = document.getElementById('cancelAddRouterBtn');
+        const confirmAddRouterBtn = document.getElementById('confirmAddRouterBtn');
+        const routerNameInput = document.getElementById('routerNameInput');
+        const routerSSIDInput = document.getElementById('routerSSIDInput');
+        const routerPasswordInput = document.getElementById('routerPasswordInput');
+        const routerStatusInput = document.getElementById('routerStatusInput');
+        const statusLabel = document.getElementById('statusLabel');
+        
+        // Atualiza os contadores
+        const totalRoutersElement = document.getElementById('totalRouters');
+        const emUsoCountElement = document.getElementById('emUsoCount');
+        const recolhidoCountElement = document.getElementById('recolhidoCount');
+        const emUsoPercentElement = document.getElementById('emUsoPercent');
+        const recolhidoPercentElement = document.getElementById('recolhidoPercent');
+        
+        // Variável para armazenar os roteadores
+        let routers = [];
+        let isAdmin = false;
+        let adminCredentials = {
+            email: "admin@monitor.com",
+            password: "cgrplena@2025!"
+        };
+
+        // Referências do Firebase
+        let routersRef;
+        let auth;
+
+        // Aguarda o Firebase estar pronto
+        document.addEventListener('DOMContentLoaded', () => {
+            // Configura as referências do Firebase
+            routersRef = firebase.ref(firebase.database, 'routers');
+            auth = firebase.auth;
+            
+            // Observa mudanças nos dados do Firebase
+            firebase.onValue(routersRef, (snapshot) => {
+                routers = snapshot.val() || [];
+                renderRouters();
+            });
+            
+            // Inicializa a página
+            init();
+        });
+
+        // Função para atualizar estatísticas
+        function updateStats() {
+            const total = routers.length;
+            const emUso = routers.filter(r => r.status).length;
+            const recolhido = total - emUso;
+            const emUsoPercent = total > 0 ? Math.round((emUso / total) * 100) : 0;
+            const recolhidoPercent = total > 0 ? Math.round((recolhido / total) * 100) : 0;
+            
+            totalRoutersElement.textContent = total;
+            emUsoCountElement.textContent = emUso;
+            recolhidoCountElement.textContent = recolhido;
+            emUsoPercentElement.textContent = emUsoPercent;
+            recolhidoPercentElement.textContent = recolhidoPercent;
+        }
+        
+        // Função para renderizar os roteadores
+        function renderRouters() {
+            routersContainer.innerHTML = '';
+            
+            routers.forEach((router, index) => {
+                const routerElement = document.createElement('div');
+                routerElement.className = `status-card bg-white rounded-lg shadow p-5 ${router.status ? 'em-uso' : 'recolhido'} fade-in`;
+                routerElement.innerHTML = `
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <h3 class="text-xl font-semibold text-gray-800">${router.name}</h3>
+                            <p class="text-sm text-gray-500">${router.status ? 'Em Uso' : 'Recolhido'}</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="relative flex h-3 w-3">
+                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full ${router.status ? 'bg-green-400' : 'bg-red-400'} opacity-75"></span>
+                                <span class="relative inline-flex rounded-full h-3 w-3 ${router.status ? 'bg-green-500' : 'bg-red-500'}"></span>
+                            </span>
+                            ${isAdmin ? `
+                            <label class="toggle-switch">
+                                <input type="checkbox" class="status-toggle" data-index="${index}" ${router.status ? 'checked' : ''}>
+                                <span class="slider"></span>
+                            </label>
+                            ` : ''}
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-500 mb-1">SSID</label>
+                            ${isAdmin ? `
+                            <input type="text" class="ssid-input w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" value="${router.ssid}" data-index="${index}">
+                            ` : `<p class="w-full px-3 py-2">${router.ssid}</p>`}
+                        </div>
+                        <div class="password-field">
+                            <label class="block text-sm font-medium text-gray-500 mb-1">Senha WiFi</label>
+                            ${isAdmin ? `
+                            <input type="password" class="password-input w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" value="${router.password}" data-index="${index}">
+                            <span class="toggle-password" onclick="togglePasswordVisibility(this)">
+                                <i class="fas fa-eye"></i>
+                            </span>
+                            ` : `<p class="w-full px-3 py-2">••••••••</p>`}
+                        </div>
+                    </div>
+                    
+                    ${isAdmin ? `
+                    <div class="mt-6 flex justify-between items-center">
+                        <button class="delete-router-btn px-3 py-1 text-sm text-red-600 hover:text-red-800" data-index="${index}">
+                            <i class="fas fa-trash-alt mr-1"></i> Remover
+                        </button>
+                        <span class="text-xs text-gray-400">Última alteração: ${new Date(router.lastUpdate).toLocaleString()}</span>
+                    </div>
+                    ` : ''}
+                `;
+                
+                routersContainer.appendChild(routerElement);
+            });
+            
+            // Adiciona event listeners para os elementos recém-criados (apenas para admin)
+            if (isAdmin) {
+                addEventListeners();
+            }
+            updateStats();
+        }
+        
+        // Função para adicionar event listeners
+        function addEventListeners() {
+            // Toggle status
+            document.querySelectorAll('.status-toggle').forEach(toggle => {
+                toggle.addEventListener('change', function() {
+                    const index = parseInt(this.dataset.index);
+                    routers[index].status = this.checked;
+                    routers[index].lastUpdate = new Date().toISOString();
+                    saveData();
+                });
+            });
+            
+            // Editar SSID
+            document.querySelectorAll('.ssid-input').forEach(input => {
+                input.addEventListener('change', function() {
+                    const index = parseInt(this.dataset.index);
+                    routers[index].ssid = this.value;
+                    routers[index].lastUpdate = new Date().toISOString();
+                    saveData();
+                });
+            });
+            
+            // Editar senha
+            document.querySelectorAll('.password-input').forEach(input => {
+                input.addEventListener('change', function() {
+                    const index = parseInt(this.dataset.index);
+                    routers[index].password = this.value;
+                    routers[index].lastUpdate = new Date().toISOString();
+                    saveData();
+                });
+            });
+            
+            // Remover roteador
+            document.querySelectorAll('.delete-router-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const index = parseInt(this.dataset.index);
+                    if (confirm(`Tem certeza que deseja remover o roteador "${routers[index].name}"?`)) {
+                        routers.splice(index, 1);
+                        saveData();
+                    }
+                });
+            });
+        }
+        
+        // Função para salvar dados no Firebase
+        function saveData() {
+            firebase.set(routersRef, routers)
+                .then(() => {
+                    showFeedback('Dados salvos com sucesso!', 'green');
+                })
+                .catch((error) => {
+                    showFeedback('Erro ao salvar dados: ' + error.message, 'red');
+                });
+        }
+        
+        // Função para mostrar feedback
+        function showFeedback(message, color) {
+            const feedback = document.createElement('div');
+            feedback.className = `fixed bottom-4 right-4 bg-${color}-500 text-white px-4 py-2 rounded-md shadow-lg`;
+            feedback.innerHTML = `<i class="fas fa-${color === 'green' ? 'check' : 'exclamation'}-circle mr-2"></i> ${message}`;
+            document.body.appendChild(feedback);
+            
+            setTimeout(() => {
+                feedback.classList.add('opacity-0', 'transition-opacity', 'duration-500');
+                setTimeout(() => feedback.remove(), 500);
+            }, 2000);
+        }
+        
+        // Função para alternar visibilidade da senha
+        function togglePasswordVisibility(element) {
+            const input = element.parentElement.querySelector('input');
+            const icon = element.querySelector('i');
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.replace('fa-eye', 'fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.replace('fa-eye-slash', 'fa-eye');
+            }
+        }
+        
+        // Event listeners para o modal (apenas para admin)
+        addRouterBtn.addEventListener('click', () => {
+            routerNameInput.value = '';
+            routerSSIDInput.value = '';
+            routerPasswordInput.value = '';
+            routerStatusInput.checked = true;
+            statusLabel.textContent = 'Em Uso';
+            addRouterModal.classList.remove('hidden');
+        });
+        
+        closeModalBtn.addEventListener('click', () => {
+            addRouterModal.classList.add('hidden');
+        });
+        
+        cancelAddRouterBtn.addEventListener('click', () => {
+            addRouterModal.classList.add('hidden');
+        });
+        
+        routerStatusInput.addEventListener('change', function() {
+            statusLabel.textContent = this.checked ? 'Em Uso' : 'Recolhido';
+        });
+        
+        confirmAddRouterBtn.addEventListener('click', () => {
+            const name = routerNameInput.value.trim();
+            const ssid = routerSSIDInput.value.trim();
+            const password = routerPasswordInput.value.trim();
+            const status = routerStatusInput.checked;
+            
+            if (name && ssid) {
+                routers.push({
+                    name,
+                    ssid,
+                    password,
+                    status,
+                    lastUpdate: new Date().toISOString()
+                });
+                
+                saveData();
+                addRouterModal.classList.add('hidden');
+            } else {
+                showFeedback('Por favor, preencha pelo menos o nome e o SSID do roteador.', 'red');
+            }
+        });
+        
+        // Fechar modal ao clicar fora
+        addRouterModal.addEventListener('click', (e) => {
+            if (e.target === addRouterModal) {
+                addRouterModal.classList.add('hidden');
+            }
+        });
+        
+        // Login com Firebase Auth
+        loginBtn.addEventListener('click', () => {
+            const email = loginEmail.value.trim();
+            const password = loginPassword.value.trim();
+            
+            // Verificação local antes de tentar autenticar no Firebase
+            if (email === adminCredentials.email && password === adminCredentials.password) {
+                // Simula login bem-sucedido
+                loginError.classList.add('hidden');
+                isAdmin = true;
+                loginScreen.classList.add('hidden');
+                adminControls.classList.remove('hidden');
+                renderRouters(); // Re-renderiza para mostrar controles de admin
+            } else {
+                // Mostra erro de credenciais inválidas
+                loginError.textContent = "Credenciais inválidas. Por favor, tente novamente.";
+                loginError.classList.remove('hidden');
+            }
+        });
+        
+        // Logout
+        logoutBtn.addEventListener('click', () => {
+            isAdmin = false;
+            loginScreen.classList.add('hidden');
+            adminControls.classList.add('hidden');
+            renderRouters(); // Re-renderiza para esconder controles de admin
+        });
+        
+        // Botão para acessar a tela de login admin
+        adminLoginBtn.addEventListener('click', () => {
+            loginScreen.classList.remove('hidden');
+            // Limpa os campos ao abrir o login
+            loginEmail.value = '';
+            loginPassword.value = '';
+            loginError.classList.add('hidden');
+        });
+        
+        // Botão para voltar à visualização pública
+        publicViewBtn.addEventListener('click', () => {
+            loginScreen.classList.add('hidden');
+        });
+        
+        // Inicialização da página
+        function init() {
+            // Mostra conteúdo principal para todos
+            mainContent.classList.remove('hidden');
+            
+            // Mostra botão de login admin apenas se não estiver logado
+            if (!isAdmin) {
+                adminLoginBtn.classList.remove('hidden');
+            }
+        }
+        
+        // Torna a função global para ser usada nos elementos
+        window.togglePasswordVisibility = togglePasswordVisibility;
+    </script>
+</body>
+</html>
