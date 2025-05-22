@@ -189,11 +189,10 @@
             </div>
         </div>
 
-        <div id="mainContent">
-            <header class="mb-10 text-center">
+        <div id="mainContent" class="hidden"> <header class="mb-10 text-center">
                 <div class="flex justify-between items-center mb-4">
                     <h1 class="text-4xl font-bold text-gray-800 mb-2">Monitor da Feira</h1>
-                    <button id="adminLoginBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline hidden">
+                    <button id="adminLoginBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
                         <i class="fas fa-lock mr-2"></i>Acesso Admin
                     </button>
                 </div>
@@ -333,50 +332,48 @@
         // Variável para armazenar os roteadores
         let routers = {};
         let isAdmin = false; // Este estado será atualizado pelo Firebase Auth
-
+        
         // Referências do Firebase
         let routersRef;
         let auth;
 
-        // Aguarda o Firebase estar pronto
         document.addEventListener('DOMContentLoaded', () => {
-            // Configura as referências do Firebase
             routersRef = firebase.ref(firebase.database, 'routers');
             auth = firebase.auth;
             
-            // Verifica o estado de autenticação
             firebase.onAuthStateChanged(auth, (user) => {
                 if (user) {
-                    // Usuário está logado
+                    // Usuário está logado (possivelmente admin)
                     isAdmin = true;
                     loginScreen.classList.add('hidden');
-                    adminControls.classList.remove('hidden');
-                    adminLoginBtn.classList.add('hidden');
-                    mainContent.classList.remove('hidden'); // Garante que o conteúdo principal seja visível
-                    renderRouters(); // Re-renderiza para mostrar controles de admin
+                    mainContent.classList.remove('hidden'); // Exibe o conteúdo principal
+                    adminControls.classList.remove('hidden'); // Exibe controles de admin
+                    adminLoginBtn.classList.add('hidden'); // Oculta botão de login admin
+                    console.log("Usuário logado. isAdmin:", isAdmin); // Debug
                 } else {
-                    // Usuário não está logado
+                    // Usuário não está logado (visualização pública)
                     isAdmin = false;
-                    adminControls.classList.add('hidden');
-                    adminLoginBtn.classList.remove('hidden');
-                    // Se não estiver logado, mas já estiver na tela de login, não esconde
-                    if (loginScreen.classList.contains('hidden')) {
-                         mainContent.classList.remove('hidden'); // Mostra o conteúdo principal para visualização pública
-                    }
-                    renderRouters(); // Re-renderiza para esconder controles de admin
+                    loginScreen.classList.add('hidden'); // Certifica que o login está oculto (se não estiver sendo usado)
+                    mainContent.classList.remove('hidden'); // Exibe o conteúdo principal
+                    adminControls.classList.add('hidden'); // Oculta controles de admin
+                    adminLoginBtn.classList.remove('hidden'); // Exibe botão de login admin
+                    console.log("Usuário não logado. isAdmin:", isAdmin); // Debug
                 }
+                // Sempre renderiza os roteadores após a mudança de estado de autenticação
+                // para garantir que os controles corretos sejam exibidos/ocultados.
+                renderRouters(); 
             });
             
             // Observa mudanças nos dados do Firebase
             firebase.onValue(routersRef, (snapshot) => {
                 routers = snapshot.val() || {};
-                renderRouters();
+                renderRouters(); // Garante que a lista de roteadores seja sempre atualizada
             });
-            
-            // Inicialização da página
-            // A visibilidade da tela de login/conteúdo principal é gerenciada por onAuthStateChanged
-            // init(); // Removido para evitar conflito com onAuthStateChanged
         });
+
+        // ... (o restante das funções como updateStats, renderRouters, addEventListeners,
+        //      handleStatusToggle, handleSSIDChange, handlePasswordChange, handleDeleteRouter,
+        //      showFeedback, togglePasswordVisibility são as mesmas que você tem) ...
 
         // Função para atualizar estatísticas
         function updateStats() {
@@ -408,9 +405,15 @@
                 `;
                 
                 if (isAdmin) {
-                    document.getElementById('addFirstRouterBtn').addEventListener('click', () => {
-                        addRouterBtn.click();
-                    });
+                    const addFirstRouterBtn = document.getElementById('addFirstRouterBtn');
+                    if (addFirstRouterBtn) { // Verifica se o botão existe antes de adicionar o listener
+                        addFirstRouterBtn.removeEventListener('click', () => { // Remove para evitar duplicidade
+                            addRouterBtn.click();
+                        });
+                        addFirstRouterBtn.addEventListener('click', () => {
+                            addRouterBtn.click();
+                        });
+                    }
                 }
                 
                 updateStats();
@@ -746,11 +749,7 @@
                 .then((userCredential) => {
                     // Login bem-sucedido
                     loginError.classList.add('hidden');
-                    // isAdmin = true; // Isso é feito pelo onAuthStateChanged
-                    // loginScreen.classList.add('hidden'); // Isso é feito pelo onAuthStateChanged
-                    // adminControls.classList.remove('hidden'); // Isso é feito pelo onAuthStateChanged
-                    // adminLoginBtn.classList.add('hidden'); // Isso é feito pelo onAuthStateChanged
-                    // renderRouters(); // Re-renderiza para mostrar controles de admin
+                    // onAuthStateChanged cuidará da atualização da UI
                 })
                 .catch((error) => {
                     console.error('Erro de login:', error); // Log do erro
@@ -774,14 +773,8 @@
         logoutBtn.addEventListener('click', () => {
             firebase.signOut(auth)
                 .then(() => {
-                    // isAdmin = false; // Isso é feito pelo onAuthStateChanged
-                    // adminControls.classList.add('hidden'); // Isso é feito pelo onAuthStateChanged
-                    // adminLoginBtn.classList.remove('hidden'); // Isso é feito pelo onAuthStateChanged
-                    // renderRouters(); // Re-renderiza para esconder controles de admin
                     showFeedback('Você saiu da conta administrativa', 'blue');
-                    // Ao deslogar, força a exibição da tela de login para um novo acesso administrativo
-                    loginScreen.classList.remove('hidden'); 
-                    mainContent.classList.add('hidden'); // Esconde o conteúdo principal
+                    // onAuthStateChanged cuidará da atualização da UI e exibirá loginScreen
                 })
                 .catch((error) => {
                     console.error('Erro ao sair:', error); // Log do erro
@@ -803,12 +796,9 @@
         publicViewBtn.addEventListener('click', () => {
             loginScreen.classList.add('hidden');
             mainContent.classList.remove('hidden'); // Mostra o conteúdo principal
+            // Se o usuário administrativo estiver logado, ele permanecerá logado na visualização pública.
+            // Se ele quiser sair da sessão, deve usar o botão "Sair".
         });
-        
-        // Inicialização da página (removido o init() e integrado ao onAuthStateChanged)
-        // A visibilidade inicial do mainContent deve ser controlada pelo onAuthStateChanged
-        // ou pela classe 'hidden' inicial no HTML.
-        // A lógica do onAuthStateChanged já cuida disso.
         
         // Torna a função global para ser usada nos elementos
         window.togglePasswordVisibility = togglePasswordVisibility;
