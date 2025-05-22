@@ -1,16 +1,16 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Monitor da Feira</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
   <!-- Firebase SDK -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
-    import { getDatabase, ref, set, onValue, push, remove, update } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
+    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
     import { getAuth, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
 
     const firebaseConfig = {
@@ -34,68 +34,46 @@
       set,
       onValue,
       signInWithEmailAndPassword,
-      signOut,
-      push,
-      remove,
-      update
+      signOut
     };
   </script>
-
   <style>
-    /* ... (mantém todos os estilos originais) ... */
+    .status-card {
+      transition: all 0.3s ease;
+      transform-style: preserve-3d;
+    }
+    .status-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+    .em-uso {
+      background-color: rgba(74, 222, 128, 0.1);
+      border-left: 4px solid #4ade80;
+    }
+    .recolhido {
+      background-color: rgba(248, 113, 113, 0.1);
+      border-left: 4px solid #f87171;
+    }
   </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
-  <!-- ... (mantém o conteúdo HTML original) ... -->
   <script>
-    // ...
+    const db = firebase.database;
+    const routersRef = firebase.ref(db, 'routers');
 
-    // Substitui routers array local por armazenamento Firebase real
     firebase.onValue(routersRef, (snapshot) => {
       const data = snapshot.val();
-      routers = data ? Object.values(data) : [];
-      renderRouters();
-    });
-
-    // Altera saveData para usar push (ao adicionar) e update (ao editar)
-    function saveData() {
-      const updates = {};
-      routers.forEach((router, index) => {
-        updates[index] = router;
-      });
-      firebase.set(routersRef, updates)
-        .then(() => showFeedback('Dados salvos com sucesso!', 'green'))
-        .catch((error) => showFeedback('Erro ao salvar dados: ' + error.message, 'red'));
-    }
-
-    // No adicionar novo roteador, usa push para gerar ID único
-    confirmAddRouterBtn.addEventListener('click', () => {
-      const name = routerNameInput.value.trim();
-      const ssid = routerSSIDInput.value.trim();
-      const password = routerPasswordInput.value.trim();
-      const status = routerStatusInput.checked;
-
-      if (name && ssid) {
-        const newRouter = {
-          name,
-          ssid,
-          password,
-          status,
-          lastUpdate: new Date().toISOString()
-        };
-
-        const newRef = firebase.push(routersRef);
-        firebase.set(newRef, newRouter)
-          .then(() => showFeedback('Roteador adicionado!', 'green'))
-          .catch((err) => showFeedback('Erro ao adicionar: ' + err.message, 'red'));
-
-        addRouterModal.classList.add('hidden');
-      } else {
-        showFeedback('Por favor, preencha pelo menos o nome e o SSID do roteador.', 'red');
+      if (data) {
+        localStorage.setItem('routers', JSON.stringify(data));
+        location.reload();
       }
     });
 
-    // ...
+    function saveRouters(routers) {
+      firebase.set(routersRef, routers)
+        .then(() => console.log("Dados salvos"))
+        .catch(err => console.error("Erro ao salvar:", err));
+    }
   </script>
 </body>
 </html>
