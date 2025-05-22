@@ -43,13 +43,58 @@
         };
     </script>
     <style>
+        /* Transições para o tema */
+        html.dark body {
+            background-color: #1a202c;
+            color: #e2e8f0;
+        }
+        html.dark .status-card, html.dark .login-form, html.dark .stats, html.dark .dashboard-card, html.dark #addRouterModal > div {
+            background-color: #2d3748;
+            color: #e2e8f0;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+        html.dark .border, html.dark input, html.dark select, html.dark textarea {
+            border-color: #4a5568 !important;
+            background-color: #4a5568 !important;
+            color: #e2e8f0 !important;
+        }
+        html.dark input::placeholder {
+            color: #a0aec0 !important;
+        }
+        html.dark .text-gray-700 {
+            color: #cbd5e0 !important;
+        }
+        html.dark .text-gray-500 {
+            color: #a0aec0 !important;
+        }
+        html.dark .text-gray-800 {
+            color: #e2e8f0 !important;
+        }
+        html.dark .toggle-password {
+            color: #cbd5e0 !important;
+        }
+        html.dark .bg-gray-200 {
+            background-color: #4a5568 !important;
+            color: #e2e8f0 !important;
+        }
+        html.dark .bg-gray-200:hover {
+            background-color: #6b7280 !important;
+        }
+        html.dark .bg-gray-100 { /* Para erros ou outros fundos claros */
+            background-color: #4a5568 !important;
+        }
+        html.dark .text-red-700 { /* Para texto de erro */
+            color: #feb2b2 !important;
+        }
+
+
         .status-card {
             transition: all 0.3s ease;
             transform-style: preserve-3d;
         }
         .status-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            transform: translateY(-3px); /* Reduzido de -5px para -3px */
+            box-shadow: 0 8px 16px rgba(0,0,0,0.08); /* Sombra mais suave */
         }
         .em-uso {
             background-color: rgba(74, 222, 128, 0.1);
@@ -62,8 +107,8 @@
         .toggle-switch {
             position: relative;
             display: inline-block;
-            width: 50px;
-            height: 24px;
+            width: 40px; /* Reduzido de 50px */
+            height: 20px; /* Reduzido de 24px */
         }
         .toggle-switch input {
             opacity: 0;
@@ -79,15 +124,15 @@
             bottom: 0;
             background-color: #ccc;
             transition: .4s;
-            border-radius: 24px;
+            border-radius: 20px; /* Ajustado para nova altura */
         }
         .slider:before {
             position: absolute;
             content: "";
-            height: 16px;
-            width: 16px;
-            left: 4px;
-            bottom: 4px;
+            height: 14px; /* Reduzido de 16px */
+            width: 14px; /* Reduzido de 16px */
+            left: 3px; /* Ajustado */
+            bottom: 3px; /* Ajustado */
             background-color: white;
             transition: .4s;
             border-radius: 50%;
@@ -96,7 +141,7 @@
             background-color: #4ade80;
         }
         input:checked + .slider:before {
-            transform: translateX(26px);
+            transform: translateX(20px); /* Ajustado para nova largura */
         }
         .pulse {
             animation: pulse 2s infinite;
@@ -158,7 +203,7 @@
 </head>
 <body class="bg-gray-50 min-h-screen">
     <div id="app" class="container mx-auto px-4 py-8">
-        <div id="loginScreen" class="hidden items-center justify-center min-h-screen">
+        <div id="loginScreen" class="hidden flex items-center justify-center min-h-screen">
             <div class="login-form">
                 <h2 class="text-2xl font-bold text-center mb-6">Acesso Administrativo</h2>
                 <div id="loginError" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4"></div>
@@ -189,63 +234,59 @@
             </div>
         </div>
 
-        <div id="mainContent" class="hidden"> <header class="mb-10 text-center">
-                <div class="flex justify-between items-center mb-4">
-                    <h1 class="text-4xl font-bold text-gray-800 mb-2">Monitor da Feira</h1>
-                    <button id="adminLoginBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
-                        <i class="fas fa-lock mr-2"></i>Acesso Admin
-                    </button>
+        <div id="mainContent" class="hidden"> 
+            <header class="mb-8 text-center"> <div class="flex justify-between items-center mb-3"> <h1 class="text-3xl md:text-4xl font-bold text-gray-800 mb-0">Monitor da Feira</h1> <div class="flex items-center gap-2">
+                        <button id="themeToggleBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-3 rounded-full focus:outline-none focus:shadow-outline transition-colors duration-200" title="Alternar Tema">
+                            <i class="fas fa-sun" id="themeIcon"></i> </button>
+                        <button id="adminLoginBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                            <i class="fas fa-lock mr-2"></i>Acesso Admin
+                        </button>
+                    </div>
                 </div>
-                <p class="text-gray-600">Controle dos roteadores e configurações de WiFi</p>
-                <div class="mt-6 flex justify-center gap-4">
-                    <div class="flex items-center">
-                        <div class="w-4 h-4 rounded-full bg-green-500 mr-2"></div>
-                        <span class="text-sm">Em Uso</span>
+                <p class="text-gray-600 text-sm">Controle dos roteadores e configurações de WiFi</p> <div class="mt-4 flex justify-center gap-4 text-sm"> <div class="flex items-center">
+                        <div class="w-3 h-3 rounded-full bg-green-500 mr-2"></div> <span>Em Uso</span>
                     </div>
                     <div class="flex items-center">
-                        <div class="w-4 h-4 rounded-full bg-red-500 mr-2"></div>
-                        <span class="text-sm">Recolhido</span>
+                        <div class="w-3 h-3 rounded-full bg-red-500 mr-2"></div> <span>Recolhido</span>
                     </div>
                 </div>
             </header>
 
-            <div class="mb-8 flex flex-col md:flex-row justify-between items-center gap-4">
-                <div class="stats shadow bg-white p-4 rounded-lg w-full md:w-auto">
-                    <div class="stat">
-                        <div class="stat-title">Total de Roteadores</div>
-                        <div class="stat-value text-indigo-600" id="totalRouters">0</div>
-                        <div class="stat-desc">Dispositivos cadastrados</div>
+            <div class="mb-6 flex flex-col lg:flex-row justify-between items-center gap-4"> <div class="stats shadow bg-white p-4 rounded-lg w-full lg:w-1/2 flex justify-around"> <div class="stat text-center">
+                        <div class="stat-title text-sm">Total de Roteadores</div> <div class="stat-value text-indigo-600 text-xl" id="totalRouters">0</div> <div class="stat-desc text-xs">Dispositivos cadastrados</div> </div>
+                    <div class="stat text-center">
+                        <div class="stat-title text-sm">Em Uso</div>
+                        <div class="stat-value text-green-600 text-xl" id="emUsoCount">0</div>
+                        <div class="stat-desc text-xs"><span id="emUsoPercent">0</span>% operando</div>
                     </div>
-                    <div class="stat">
-                        <div class="stat-title">Em Uso</div>
-                        <div class="stat-value text-green-600" id="emUsoCount">0</div>
-                        <div class="stat-desc"><span id="emUsoPercent">0</span>% operando</div>
-                    </div>
-                    <div class="stat">
-                        <div class="stat-title">Recolhido</div>
-                        <div class="stat-value text-red-600" id="recolhidoCount">0</div>
-                        <div class="stat-desc"><span id="recolhidoPercent">0</span>% inativos</div>
+                    <div class="stat text-center">
+                        <div class="stat-title text-sm">Recolhido</div>
+                        <div class="stat-value text-red-600 text-xl" id="recolhidoCount">0</div>
+                        <div class="stat-desc text-xs"><span id="recolhidoPercent">0</span>% inativos</div>
                     </div>
                 </div>
 
-                <div class="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
-                    <div class="relative w-full sm:w-64">
-                        <input type="text" id="searchInput" placeholder="Pesquisar roteador..." class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 pl-10">
-                        <i class="fas fa-search text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2"></i>
-                    </div>
-                    <div id="adminControls" class="hidden flex gap-2 w-full">
-                        <button id="addRouterBtn" class="btn bg-indigo-600 text-white hover:bg-indigo-700 flex items-center gap-2 w-full md:w-auto">
-                            <i class="fas fa-plus"></i> Adicionar Roteador
-                        </button>
-                        <button id="logoutBtn" class="btn bg-gray-600 text-white hover:bg-gray-700 flex items-center gap-2 w-full md:w-auto">
-                            <i class="fas fa-sign-out-alt"></i> Sair
-                        </button>
+                <div class="dashboard-card shadow bg-white p-4 rounded-lg w-full lg:w-1/2">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-2">Resumo da Rede</h3>
+                    <div class="grid grid-cols-2 gap-2 text-sm">
+                        <div><strong class="text-gray-600">Último Roteador Online:</strong> <span id="lastOnlineRouter" class="font-medium">N/A</span></div>
+                        <div><strong class="text-gray-600">Tempo de Atividade Médio:</strong> <span id="avgUptime" class="font-medium">N/A</span></div>
+                        <div><strong class="text-gray-600">Roteadores Críticos:</strong> <span id="criticalRouters" class="font-medium text-red-500">0</span></div>
+                        <div><strong class="text-gray-600">Total de Usuários Conectados:</strong> <span id="totalUsers" class="font-medium">N/A</span></div>
                     </div>
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-6" id="routersContainer">
-                <div class="text-center py-10">
+            <div class="mb-6 flex flex-col sm:flex-row items-center gap-4 w-full"> <div class="relative w-full sm:w-64">
+                    <input type="text" id="searchInput" placeholder="Pesquisar roteador..." class="w-full px-4 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 pl-10"> <i class="fas fa-search text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2 text-sm"></i> </div>
+                <div id="adminControls" class="hidden flex gap-2 w-full sm:w-auto"> <button id="addRouterBtn" class="btn bg-indigo-600 text-white hover:bg-indigo-700 flex items-center justify-center gap-2 px-3 py-2 text-sm rounded w-full sm:w-auto"> <i class="fas fa-plus"></i> Adicionar Roteador
+                    </button>
+                    <button id="logoutBtn" class="btn bg-gray-600 text-white hover:bg-gray-700 flex items-center justify-center gap-2 px-3 py-2 text-sm rounded w-full sm:w-auto"> <i class="fas fa-sign-out-alt"></i> Sair
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4" id="routersContainer"> <div class="col-span-full text-center py-10">
                     <div class="loading-spinner mx-auto mb-4"></div>
                     <p class="text-gray-500">Carregando roteadores...</p>
                 </div>
@@ -259,19 +300,15 @@
                             <i class="fas fa-times"></i>
                         </button>
                     </div>
-                    <div class="space-y-4">
-                        <div>
+                    <div class="space-y-3"> <div>
                             <label class="block text-sm font-medium text-gray-500 mb-1">Nome do Roteador</label>
-                            <input type="text" id="routerNameInput" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                        </div>
+                            <input type="text" id="routerNameInput" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"> </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-500 mb-1">SSID</label>
-                            <input type="text" id="routerSSIDInput" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                        </div>
+                            <input type="text" id="routerSSIDInput" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"> </div>
                         <div class="password-field">
                             <label class="block text-sm font-medium text-gray-500 mb-1">Senha WiFi</label>
-                            <input type="password" id="routerPasswordInput" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                            <span class="toggle-password" onclick="togglePasswordVisibility(this)">
+                            <input type="password" id="routerPasswordInput" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"> <span class="toggle-password" onclick="togglePasswordVisibility(this)">
                                 <i class="fas fa-eye"></i>
                             </span>
                         </div>
@@ -284,10 +321,7 @@
                             <span class="ml-2 text-sm" id="statusLabel">Em Uso</span>
                         </div>
                     </div>
-                    <div class="mt-6 flex justify-end gap-3">
-                        <button id="cancelAddRouterBtn" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">Cancelar</button>
-                        <button id="confirmAddRouterBtn" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">
-                            <span id="confirmBtnText">Adicionar</span>
+                    <div class="mt-5 flex justify-end gap-3"> <button id="cancelAddRouterBtn" class="px-3 py-1.5 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 text-sm">Cancelar</button> <button id="confirmAddRouterBtn" class="px-3 py-1.5 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 text-sm"> <span id="confirmBtnText">Adicionar</span>
                             <span id="confirmBtnSpinner" class="loading-spinner hidden ml-2"></span>
                         </button>
                     </div>
@@ -311,6 +345,8 @@
         const adminControls = document.getElementById('adminControls');
         const adminLoginBtn = document.getElementById('adminLoginBtn');
         const publicViewBtn = document.getElementById('publicViewBtn');
+        const themeToggleBtn = document.getElementById('themeToggleBtn'); // Novo
+        const themeIcon = document.getElementById('themeIcon'); // Novo
         
         const routersContainer = document.getElementById('routersContainer');
         const addRouterBtn = document.getElementById('addRouterBtn');
@@ -325,7 +361,7 @@
         const routerPasswordInput = document.getElementById('routerPasswordInput');
         const routerStatusInput = document.getElementById('routerStatusInput');
         const statusLabel = document.getElementById('statusLabel');
-        const searchInput = document.getElementById('searchInput'); // Novo elemento de pesquisa
+        const searchInput = document.getElementById('searchInput');
         
         // Atualiza os contadores
         const totalRoutersElement = document.getElementById('totalRouters');
@@ -333,6 +369,12 @@
         const recolhidoCountElement = document.getElementById('recolhidoCount');
         const emUsoPercentElement = document.getElementById('emUsoPercent');
         const recolhidoPercentElement = document.getElementById('recolhidoPercent');
+
+        // Elementos da Dashboard
+        const lastOnlineRouterElement = document.getElementById('lastOnlineRouter');
+        const avgUptimeElement = document.getElementById('avgUptime');
+        const criticalRoutersElement = document.getElementById('criticalRouters');
+        const totalUsersElement = document.getElementById('totalUsers');
         
         // Variável para armazenar os roteadores
         let routers = {};
@@ -345,6 +387,9 @@
         document.addEventListener('DOMContentLoaded', () => {
             routersRef = firebase.ref(firebase.database, 'routers');
             auth = firebase.auth;
+
+            // Carrega o tema salvo do localStorage
+            loadTheme();
             
             firebase.onAuthStateChanged(auth, (user) => {
                 if (user) {
@@ -373,15 +418,15 @@
             firebase.onValue(routersRef, (snapshot) => {
                 routers = snapshot.val() || {};
                 renderRouters(); // Garante que a lista de roteadores seja sempre atualizada
+                updateDashboard(); // Atualiza a dashboard
             });
 
             // Adiciona event listener para o campo de pesquisa
             searchInput.addEventListener('input', renderRouters);
-        });
 
-        // ... (o restante das funções como updateStats, addEventListeners,
-        //      handleStatusToggle, handleSSIDChange, handlePasswordChange, handleDeleteRouter,
-        //      showFeedback, togglePasswordVisibility são as mesmas que você tem) ...
+            // Adiciona event listener para o botão de tema
+            themeToggleBtn.addEventListener('click', toggleTheme);
+        });
 
         // Função para atualizar estatísticas
         function updateStats() {
@@ -398,12 +443,37 @@
             emUsoPercentElement.textContent = emUsoPercent;
             recolhidoPercentElement.textContent = recolhidoPercent;
         }
+
+        // Função para atualizar a dashboard (dados simulados ou baseados no Firebase)
+        function updateDashboard() {
+            const routerList = Object.values(routers);
+
+            // Último Roteador Online (Exemplo: o mais recente com status true)
+            const onlineRouters = routerList.filter(r => r.status);
+            if (onlineRouters.length > 0) {
+                const lastOnline = onlineRouters.reduce((prev, current) => 
+                    (new Date(prev.lastUpdate) > new Date(current.lastUpdate)) ? prev : current
+                );
+                lastOnlineRouterElement.textContent = lastOnline.name;
+            } else {
+                lastOnlineRouterElement.textContent = 'N/A';
+            }
+
+            // Simulação de Tempo de Atividade Médio (precisaria de dados de uptime reais)
+            avgUptimeElement.textContent = '24h 7m'; // Dados simulados por enquanto
+
+            // Roteadores Críticos (Exemplo: roteadores offline por muito tempo ou com problemas reportados)
+            criticalRoutersElement.textContent = routerList.filter(r => !r.status).length; // Contagem de recolhidos como "críticos"
+
+            // Total de Usuários Conectados (precisaria de dados de dispositivos)
+            totalUsersElement.textContent = 'N/A'; // Dados simulados por enquanto
+        }
         
         // Função para renderizar os roteadores
         function renderRouters() {
             const searchTerm = searchInput.value.toLowerCase(); // Pega o termo de pesquisa
 
-            const filteredRouters = Object.entries(routers).filter(([id, router]) => {
+            let filteredRouters = Object.entries(routers).filter(([id, router]) => {
                 const nameMatch = router.name.toLowerCase().includes(searchTerm);
                 const ssidMatch = router.ssid.toLowerCase().includes(searchTerm);
                 // Você pode adicionar mais campos para pesquisa se quiser
@@ -424,39 +494,38 @@
                 if (isAdmin && !searchTerm) {
                     const addFirstRouterBtn = document.getElementById('addFirstRouterBtn');
                     if (addFirstRouterBtn) {
-                        addFirstRouterBtn.removeEventListener('click', () => { 
-                            addRouterBtn.click();
-                        });
-                        addFirstRouterBtn.addEventListener('click', () => {
-                            addRouterBtn.click();
-                        });
+                        // Remove e adiciona novamente para evitar múltiplos listeners em re-renders
+                        addFirstRouterBtn.removeEventListener('click', () => addRouterBtn.click());
+                        addFirstRouterBtn.addEventListener('click', () => addRouterBtn.click());
                     }
                 }
                 
                 updateStats();
+                updateDashboard(); // Garante que dashboard seja atualizada mesmo sem roteadores
                 return;
             }
             
             routersContainer.innerHTML = '';
             
-            // Cria uma cópia ordenada dos roteadores para exibição consistente
+            // Ordena os roteadores: ativos primeiro, depois recolhidos, ambos por nome
             const sortedRouters = filteredRouters.sort(([idA, routerA], [idB, routerB]) => {
-                return routerA.name.localeCompare(routerB.name); // Ordena por nome
+                // Se status é diferente, ativos vêm primeiro
+                if (routerA.status !== routerB.status) {
+                    return routerB.status - routerA.status; // true (1) - false (0) = 1 (b vem antes de a)
+                }
+                // Se status é igual, ordena por nome
+                return routerA.name.localeCompare(routerB.name);
             });
 
             sortedRouters.forEach(([id, router]) => {
                 const routerElement = document.createElement('div');
-                routerElement.className = `status-card bg-white rounded-lg shadow p-5 ${router.status ? 'em-uso' : 'recolhido'} fade-in`;
+                // Ajustado p-4 para p-3 para reduzir altura, e alguns text-sm/text-xs
+                routerElement.className = `status-card bg-white rounded-lg shadow p-3 ${router.status ? 'em-uso' : 'recolhido'} fade-in`;
                 routerElement.innerHTML = `
-                    <div class="flex justify-between items-start mb-4">
-                        <div>
-                            <h3 class="text-xl font-semibold text-gray-800">${router.name}</h3>
-                            <p class="text-sm text-gray-500">${router.status ? 'Em Uso' : 'Recolhido'}</p>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <span class="relative flex h-3 w-3">
-                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full ${router.status ? 'bg-green-400' : 'bg-red-400'} opacity-75"></span>
-                                <span class="relative inline-flex rounded-full h-3 w-3 ${router.status ? 'bg-green-500' : 'bg-red-500'}"></span>
+                    <div class="flex justify-between items-start mb-2"> <div>
+                            <h3 class="text-lg font-semibold text-gray-800">${router.name}</h3> <p class="text-xs text-gray-500">${router.status ? 'Em Uso' : 'Recolhido'}</p> </div>
+                        <div class="flex items-center gap-1"> <span class="relative flex h-2.5 w-2.5"> <span class="animate-ping absolute inline-flex h-full w-full rounded-full ${router.status ? 'bg-green-400' : 'bg-red-400'} opacity-75"></span>
+                                <span class="relative inline-flex rounded-full h-2.5 w-2.5 ${router.status ? 'bg-green-500' : 'bg-red-500'}"></span>
                             </span>
                             ${isAdmin ? `
                             <label class="toggle-switch">
@@ -467,34 +536,35 @@
                         </div>
                     </div>
                     
-                    <div class="space-y-3">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-500 mb-1">SSID</label>
-                            ${isAdmin ? `
-                            <input type="text" class="ssid-input w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" value="${router.ssid}" data-id="${id}">
-                            ` : `<p class="w-full px-3 py-2">${router.ssid}</p>`}
+                    <div class="space-y-2 text-sm"> <div>
+                            <label class="block text-xs font-medium text-gray-500 mb-0.5">SSID</label> ${isAdmin ? `
+                            <input type="text" class="ssid-input w-full px-2 py-1.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"> ` : `<p class="w-full px-2 py-1.5">${router.ssid}</p>`}
                         </div>
                         <div class="password-field">
-                            <label class="block text-sm font-medium text-gray-500 mb-1">Senha WiFi</label>
-                            ${isAdmin ? `
-                            <input type="password" class="password-input w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" value="${router.password}" data-id="${id}">
-                            <span class="toggle-password" onclick="togglePasswordVisibility(this)">
+                            <label class="block text-xs font-medium text-gray-500 mb-0.5">Senha WiFi</label> ${isAdmin ? `
+                            <input type="password" class="password-input w-full px-2 py-1.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"> <span class="toggle-password" onclick="togglePasswordVisibility(this)">
                                 <i class="fas fa-eye"></i>
                             </span>
-                            ` : `<p class="w-full px-3 py-2">••••••••</p>`}
+                            ` : `<p class="w-full px-2 py-1.5">••••••••</p>`}
                         </div>
                     </div>
                     
                     ${isAdmin ? `
-                    <div class="mt-6 flex justify-between items-center">
-                        <button class="delete-router-btn px-3 py-1 text-sm text-red-600 hover:text-red-800" data-id="${id}">
-                            <i class="fas fa-trash-alt mr-1"></i> Remover
+                    <div class="mt-4 flex justify-between items-center text-xs"> <button class="delete-router-btn px-2 py-1 text-red-600 hover:text-red-800 rounded"> <i class="fas fa-trash-alt mr-1"></i> Remover
                         </button>
-                        <span class="text-xs text-gray-400">Última alteração: ${new Date(router.lastUpdate).toLocaleString()}</span>
+                        <span class="text-gray-400">Última alteração: ${new Date(router.lastUpdate).toLocaleString()}</span>
                     </div>
                     ` : ''}
                 `;
                 
+                // Definir valores dos inputs para admin (depois de innerHTML)
+                if (isAdmin) {
+                    const ssidInput = routerElement.querySelector('.ssid-input');
+                    if (ssidInput) ssidInput.value = router.ssid;
+                    const passwordInput = routerElement.querySelector('.password-input');
+                    if (passwordInput) passwordInput.value = router.password;
+                }
+
                 routersContainer.appendChild(routerElement);
             });
             
@@ -503,31 +573,32 @@
                 addEventListeners();
             }
             updateStats();
+            updateDashboard();
         }
         
         // Função para adicionar event listeners
         function addEventListeners() {
             // Toggle status
             document.querySelectorAll('.status-toggle').forEach(toggle => {
-                toggle.removeEventListener('change', handleStatusToggle); // Remove para evitar duplicidade
+                toggle.removeEventListener('change', handleStatusToggle); 
                 toggle.addEventListener('change', handleStatusToggle);
             });
             
             // Editar SSID
             document.querySelectorAll('.ssid-input').forEach(input => {
-                input.removeEventListener('change', handleSSIDChange); // Remove para evitar duplicidade
+                input.removeEventListener('change', handleSSIDChange); 
                 input.addEventListener('change', handleSSIDChange);
             });
             
             // Editar senha
             document.querySelectorAll('.password-input').forEach(input => {
-                input.removeEventListener('change', handlePasswordChange); // Remove para evitar duplicidade
+                input.removeEventListener('change', handlePasswordChange); 
                 input.addEventListener('change', handlePasswordChange);
             });
             
             // Remover roteador
             document.querySelectorAll('.delete-router-btn').forEach(btn => {
-                btn.removeEventListener('click', handleDeleteRouter); // Remove para evitar duplicidade
+                btn.removeEventListener('click', handleDeleteRouter); 
                 btn.addEventListener('click', handleDeleteRouter);
             });
         }
@@ -538,7 +609,7 @@
             const newStatus = this.checked;
             
             // Atualiza localmente primeiro para feedback imediato
-            if (routers[id]) { // Verifica se o roteador ainda existe antes de atualizar
+            if (routers[id]) { 
                 routers[id].status = newStatus;
                 routers[id].lastUpdate = new Date().toISOString();
             }
@@ -550,7 +621,7 @@
                     showFeedback(`Status do roteador "${routers[id].name}" atualizado!`, 'green');
                 })
                 .catch((error) => {
-                    console.error('Erro ao atualizar status:', error); // Log do erro
+                    console.error('Erro ao atualizar status:', error); 
                     showFeedback('Erro ao atualizar status: ' + error.message, 'red');
                     // Reverte a mudança local em caso de erro
                     if (routers[id]) {
@@ -565,7 +636,7 @@
             
             if (newSSID === '') {
                 showFeedback('O SSID não pode estar vazio', 'red');
-                this.value = routers[id] ? routers[id].ssid : ''; // Restaura valor original
+                this.value = routers[id] ? routers[id].ssid : ''; 
                 return;
             }
             
@@ -580,7 +651,7 @@
                     showFeedback(`SSID do roteador "${routers[id].name}" atualizado!`, 'green');
                 })
                 .catch((error) => {
-                    console.error('Erro ao atualizar SSID:', error); // Log do erro
+                    console.error('Erro ao atualizar SSID:', error); 
                     showFeedback('Erro ao atualizar SSID: ' + error.message, 'red');
                     if (routers[id]) {
                         this.value = routers[id].ssid;
@@ -603,7 +674,7 @@
                     showFeedback(`Senha do roteador "${routers[id].name}" atualizada!`, 'green');
                 })
                 .catch((error) => {
-                    console.error('Erro ao atualizar senha:', error); // Log do erro
+                    console.error('Erro ao atualizar senha:', error); 
                     showFeedback('Erro ao atualizar senha: ' + error.message, 'red');
                     if (routers[id]) {
                         this.value = routers[id].password;
@@ -628,7 +699,7 @@
                         showFeedback(`Roteador "${routerName}" removido com sucesso!`, 'green');
                     })
                     .catch((error) => {
-                        console.error('Erro ao remover roteador:', error); // Log do erro
+                        console.error('Erro ao remover roteador:', error); 
                         showFeedback('Erro ao remover roteador: ' + error.message, 'red');
                         // Restaura o botão
                         this.innerHTML = originalText;
@@ -727,7 +798,7 @@
                     routerPasswordInput.value = '';
                 })
                 .catch((error) => {
-                    console.error('Erro ao adicionar roteador:', error); // **Adicionado console.error para depuração**
+                    console.error('Erro ao adicionar roteador:', error); 
                     showFeedback('Erro ao adicionar roteador: ' + error.message, 'red');
                 })
                 .finally(() => {
@@ -769,7 +840,7 @@
                     // onAuthStateChanged cuidará da atualização da UI
                 })
                 .catch((error) => {
-                    console.error('Erro de login:', error); // Log do erro
+                    console.error('Erro de login:', error); 
                     // Melhora a mensagem de erro para o usuário
                     if (error.code === 'auth/invalid-email' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
                         loginError.textContent = "Credenciais inválidas. Verifique seu e-mail e senha.";
@@ -794,7 +865,7 @@
                     // onAuthStateChanged cuidará da atualização da UI e exibirá loginScreen
                 })
                 .catch((error) => {
-                    console.error('Erro ao sair:', error); // Log do erro
+                    console.error('Erro ao sair:', error); 
                     showFeedback('Erro ao sair: ' + error.message, 'red');
                 });
         });
@@ -802,7 +873,7 @@
         // Botão para acessar a tela de login admin
         adminLoginBtn.addEventListener('click', () => {
             loginScreen.classList.remove('hidden');
-            mainContent.classList.add('hidden'); // Esconde o conteúdo principal ao ir para o login
+            mainContent.classList.add('hidden'); 
             // Limpa os campos ao abrir o login
             loginEmail.value = '';
             loginPassword.value = '';
@@ -812,11 +883,35 @@
         // Botão para voltar à visualização pública
         publicViewBtn.addEventListener('click', () => {
             loginScreen.classList.add('hidden');
-            mainContent.classList.remove('hidden'); // Mostra o conteúdo principal
-            // Se o usuário administrativo estiver logado, ele permanecerá logado na visualização pública.
-            // Se ele quiser sair da sessão, deve usar o botão "Sair".
+            mainContent.classList.remove('hidden'); 
         });
         
+        // --- Funções de Tema ---
+        function toggleTheme() {
+            const html = document.documentElement;
+            if (html.classList.contains('dark')) {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+                themeIcon.classList.replace('fa-moon', 'fa-sun'); // Mudar ícone para sol
+            } else {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+                themeIcon.classList.replace('fa-sun', 'fa-moon'); // Mudar ícone para lua
+            }
+        }
+
+        function loadTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            const html = document.documentElement;
+            if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                html.classList.add('dark');
+                themeIcon.classList.replace('fa-sun', 'fa-moon'); // Define ícone para lua
+            } else {
+                html.classList.remove('dark');
+                themeIcon.classList.replace('fa-moon', 'fa-sun'); // Define ícone para sol
+            }
+        }
+
         // Torna a função global para ser usada nos elementos
         window.togglePasswordVisibility = togglePasswordVisibility;
     </script>
