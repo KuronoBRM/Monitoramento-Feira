@@ -19,7 +19,7 @@
         <h1 class="text-4xl font-bold text-gray-800 mb-2">Monitor da Feira</h1>
         <p class="text-gray-600">Controle dos roteadores e configurações de WiFi</p>
       </header>
-      <div class="flex justify-end mb-4 hidden" id="adminControls">
+      <div class="flex justify-end mb-4" id="adminControls" style="display: none;">
         <button id="addRouterBtn" class="bg-green-500 text-white px-4 py-2 rounded">Adicionar Roteador</button>
       </div>
       <div id="routersContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
@@ -70,6 +70,10 @@
         renderRouters();
       });
 
+      init();
+    });
+
+    function init() {
       document.getElementById('adminLoginBtn').addEventListener('click', () => {
         document.getElementById('loginScreen').classList.remove('hidden');
       });
@@ -86,7 +90,7 @@
         if (email === adminCredentials.email && password === adminCredentials.password) {
           isAdmin = true;
           document.getElementById('loginScreen').classList.add('hidden');
-          document.getElementById('adminControls').classList.remove('hidden');
+          document.getElementById('adminControls').style.display = 'flex';
           renderRouters();
         } else {
           errorBox.textContent = 'Credenciais inválidas';
@@ -111,7 +115,7 @@
           });
         }
       });
-    });
+    }
 
     function renderRouters() {
       const container = document.getElementById('routersContainer');
