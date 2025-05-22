@@ -6,7 +6,6 @@
     <title>Monitor da Feira</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Firebase SDK -->
     <script type="module">
         // Import the functions you need from the SDKs you need
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
@@ -159,7 +158,6 @@
 </head>
 <body class="bg-gray-50 min-h-screen">
     <div id="app" class="container mx-auto px-4 py-8">
-        <!-- Tela de login (inicialmente visível apenas para admin) -->
         <div id="loginScreen" class="hidden items-center justify-center min-h-screen">
             <div class="login-form">
                 <h2 class="text-2xl font-bold text-center mb-6">Acesso Administrativo</h2>
@@ -191,7 +189,6 @@
             </div>
         </div>
 
-        <!-- Conteúdo principal (sempre visível para todos) -->
         <div id="mainContent">
             <header class="mb-10 text-center">
                 <div class="flex justify-between items-center mb-4">
@@ -245,14 +242,12 @@
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="routersContainer">
-                <!-- Roteadores serão adicionados aqui dinamicamente -->
                 <div class="text-center py-10">
                     <div class="loading-spinner mx-auto mb-4"></div>
                     <p class="text-gray-500">Carregando roteadores...</p>
                 </div>
             </div>
 
-            <!-- Modal para adicionar novo roteador -->
             <div id="addRouterModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
                 <div class="bg-white rounded-lg p-6 w-full max-w-md">
                     <div class="flex justify-between items-center mb-4">
@@ -337,11 +332,7 @@
         
         // Variável para armazenar os roteadores
         let routers = {};
-        let isAdmin = false;
-        const adminCredentials = {
-            email: "admin",
-            password: "cgrplena@2025!"
-        };
+        let isAdmin = false; // Este estado será atualizado pelo Firebase Auth
 
         // Referências do Firebase
         let routersRef;
@@ -361,11 +352,18 @@
                     loginScreen.classList.add('hidden');
                     adminControls.classList.remove('hidden');
                     adminLoginBtn.classList.add('hidden');
+                    mainContent.classList.remove('hidden'); // Garante que o conteúdo principal seja visível
+                    renderRouters(); // Re-renderiza para mostrar controles de admin
                 } else {
                     // Usuário não está logado
                     isAdmin = false;
                     adminControls.classList.add('hidden');
                     adminLoginBtn.classList.remove('hidden');
+                    // Se não estiver logado, mas já estiver na tela de login, não esconde
+                    if (loginScreen.classList.contains('hidden')) {
+                         mainContent.classList.remove('hidden'); // Mostra o conteúdo principal para visualização pública
+                    }
+                    renderRouters(); // Re-renderiza para esconder controles de admin
                 }
             });
             
@@ -376,7 +374,8 @@
             });
             
             // Inicialização da página
-            init();
+            // A visibilidade da tela de login/conteúdo principal é gerenciada por onAuthStateChanged
+            // init(); // Removido para evitar conflito com onAuthStateChanged
         });
 
         // Função para atualizar estatísticas
@@ -420,7 +419,12 @@
             
             routersContainer.innerHTML = '';
             
-            Object.entries(routers).forEach(([id, router]) => {
+            // Cria uma cópia ordenada dos roteadores para exibição consistente
+            const sortedRouters = Object.entries(routers).sort(([idA, routerA], [idB, routerB]) => {
+                return routerA.name.localeCompare(routerB.name); // Ordena por nome
+            });
+
+            sortedRouters.forEach(([id, router]) => {
                 const routerElement = document.createElement('div');
                 routerElement.className = `status-card bg-white rounded-lg shadow p-5 ${router.status ? 'em-uso' : 'recolhido'} fade-in`;
                 routerElement.innerHTML = `
@@ -485,109 +489,132 @@
         function addEventListeners() {
             // Toggle status
             document.querySelectorAll('.status-toggle').forEach(toggle => {
-                toggle.addEventListener('change', function() {
-                    const id = this.dataset.id;
-                    const newStatus = this.checked;
-                    
-                    // Atualiza localmente primeiro para feedback imediato
-                    routers[id].status = newStatus;
-                    routers[id].lastUpdate = new Date().toISOString();
-                    
-                    // Atualiza no Firebase
-                    const routerRef = firebase.ref(firebase.database, `routers/${id}`);
-                    firebase.set(routerRef, routers[id])
-                        .then(() => {
-                            showFeedback(`Status do roteador "${routers[id].name}" atualizado!`, 'green');
-                        })
-                        .catch((error) => {
-                            showFeedback('Erro ao atualizar status: ' + error.message, 'red');
-                            // Reverte a mudança local em caso de erro
-                            this.checked = !newStatus;
-                        });
-                });
+                toggle.removeEventListener('change', handleStatusToggle); // Remove para evitar duplicidade
+                toggle.addEventListener('change', handleStatusToggle);
             });
             
             // Editar SSID
             document.querySelectorAll('.ssid-input').forEach(input => {
-                input.addEventListener('change', function() {
-                    const id = this.dataset.id;
-                    const newSSID = this.value.trim();
-                    
-                    if (newSSID === '') {
-                        showFeedback('O SSID não pode estar vazio', 'red');
-                        this.value = routers[id].ssid;
-                        return;
-                    }
-                    
-                    // Atualiza localmente primeiro para feedback imediato
-                    routers[id].ssid = newSSID;
-                    routers[id].lastUpdate = new Date().toISOString();
-                    
-                    // Atualiza no Firebase
-                    const routerRef = firebase.ref(firebase.database, `routers/${id}`);
-                    firebase.set(routerRef, routers[id])
-                        .then(() => {
-                            showFeedback(`SSID do roteador "${routers[id].name}" atualizado!`, 'green');
-                        })
-                        .catch((error) => {
-                            showFeedback('Erro ao atualizar SSID: ' + error.message, 'red');
-                            // Reverte a mudança local em caso de erro
-                            this.value = routers[id].ssid;
-                        });
-                });
+                input.removeEventListener('change', handleSSIDChange); // Remove para evitar duplicidade
+                input.addEventListener('change', handleSSIDChange);
             });
             
             // Editar senha
             document.querySelectorAll('.password-input').forEach(input => {
-                input.addEventListener('change', function() {
-                    const id = this.dataset.id;
-                    const newPassword = this.value;
-                    
-                    // Atualiza localmente primeiro para feedback imediato
-                    routers[id].password = newPassword;
-                    routers[id].lastUpdate = new Date().toISOString();
-                    
-                    // Atualiza no Firebase
-                    const routerRef = firebase.ref(firebase.database, `routers/${id}`);
-                    firebase.set(routerRef, routers[id])
-                        .then(() => {
-                            showFeedback(`Senha do roteador "${routers[id].name}" atualizada!`, 'green');
-                        })
-                        .catch((error) => {
-                            showFeedback('Erro ao atualizar senha: ' + error.message, 'red');
-                            // Reverte a mudança local em caso de erro
-                            this.value = routers[id].password;
-                        });
-                });
+                input.removeEventListener('change', handlePasswordChange); // Remove para evitar duplicidade
+                input.addEventListener('change', handlePasswordChange);
             });
             
             // Remover roteador
             document.querySelectorAll('.delete-router-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const id = this.dataset.id;
-                    const routerName = routers[id].name;
-                    
-                    if (confirm(`Tem certeza que deseja remover o roteador "${routerName}"?`)) {
-                        const routerRef = firebase.ref(firebase.database, `routers/${id}`);
-                        
-                        // Mostra feedback de carregamento
-                        const originalText = this.innerHTML;
-                        this.innerHTML = `<i class="fas fa-spinner fa-spin mr-1"></i> Removendo...`;
-                        this.disabled = true;
-                        
-                        firebase.remove(routerRef)
-                            .then(() => {
-                                showFeedback(`Roteador "${routerName}" removido com sucesso!`, 'green');
-                            })
-                            .catch((error) => {
-                                showFeedback('Erro ao remover roteador: ' + error.message, 'red');
-                                // Restaura o botão
-                                this.innerHTML = originalText;
-                                this.disabled = false;
-                            });
+                btn.removeEventListener('click', handleDeleteRouter); // Remove para evitar duplicidade
+                btn.addEventListener('click', handleDeleteRouter);
+            });
+        }
+
+        // Handlers para os eventos (separados para clareza e remoção de listeners)
+        function handleStatusToggle() {
+            const id = this.dataset.id;
+            const newStatus = this.checked;
+            
+            // Atualiza localmente primeiro para feedback imediato
+            if (routers[id]) { // Verifica se o roteador ainda existe antes de atualizar
+                routers[id].status = newStatus;
+                routers[id].lastUpdate = new Date().toISOString();
+            }
+            
+            // Atualiza no Firebase
+            const routerRef = firebase.ref(firebase.database, `routers/${id}`);
+            firebase.set(routerRef, routers[id])
+                .then(() => {
+                    showFeedback(`Status do roteador "${routers[id].name}" atualizado!`, 'green');
+                })
+                .catch((error) => {
+                    console.error('Erro ao atualizar status:', error); // Log do erro
+                    showFeedback('Erro ao atualizar status: ' + error.message, 'red');
+                    // Reverte a mudança local em caso de erro
+                    if (routers[id]) {
+                        this.checked = !newStatus;
                     }
                 });
-            });
+        }
+
+        function handleSSIDChange() {
+            const id = this.dataset.id;
+            const newSSID = this.value.trim();
+            
+            if (newSSID === '') {
+                showFeedback('O SSID não pode estar vazio', 'red');
+                this.value = routers[id] ? routers[id].ssid : ''; // Restaura valor original
+                return;
+            }
+            
+            if (routers[id]) {
+                routers[id].ssid = newSSID;
+                routers[id].lastUpdate = new Date().toISOString();
+            }
+            
+            const routerRef = firebase.ref(firebase.database, `routers/${id}`);
+            firebase.set(routerRef, routers[id])
+                .then(() => {
+                    showFeedback(`SSID do roteador "${routers[id].name}" atualizado!`, 'green');
+                })
+                .catch((error) => {
+                    console.error('Erro ao atualizar SSID:', error); // Log do erro
+                    showFeedback('Erro ao atualizar SSID: ' + error.message, 'red');
+                    if (routers[id]) {
+                        this.value = routers[id].ssid;
+                    }
+                });
+        }
+
+        function handlePasswordChange() {
+            const id = this.dataset.id;
+            const newPassword = this.value;
+            
+            if (routers[id]) {
+                routers[id].password = newPassword;
+                routers[id].lastUpdate = new Date().toISOString();
+            }
+            
+            const routerRef = firebase.ref(firebase.database, `routers/${id}`);
+            firebase.set(routerRef, routers[id])
+                .then(() => {
+                    showFeedback(`Senha do roteador "${routers[id].name}" atualizada!`, 'green');
+                })
+                .catch((error) => {
+                    console.error('Erro ao atualizar senha:', error); // Log do erro
+                    showFeedback('Erro ao atualizar senha: ' + error.message, 'red');
+                    if (routers[id]) {
+                        this.value = routers[id].password;
+                    }
+                });
+        }
+
+        function handleDeleteRouter() {
+            const id = this.dataset.id;
+            const routerName = routers[id] ? routers[id].name : 'Roteador Desconhecido';
+            
+            if (confirm(`Tem certeza que deseja remover o roteador "${routerName}"?`)) {
+                const routerRef = firebase.ref(firebase.database, `routers/${id}`);
+                
+                // Mostra feedback de carregamento
+                const originalText = this.innerHTML;
+                this.innerHTML = `<i class="fas fa-spinner fa-spin mr-1"></i> Removendo...`;
+                this.disabled = true;
+                
+                firebase.remove(routerRef)
+                    .then(() => {
+                        showFeedback(`Roteador "${routerName}" removido com sucesso!`, 'green');
+                    })
+                    .catch((error) => {
+                        console.error('Erro ao remover roteador:', error); // Log do erro
+                        showFeedback('Erro ao remover roteador: ' + error.message, 'red');
+                        // Restaura o botão
+                        this.innerHTML = originalText;
+                        this.disabled = false;
+                    });
+            }
         }
         
         // Função para mostrar feedback
@@ -680,7 +707,7 @@
                     routerPasswordInput.value = '';
                 })
                 .catch((error) => {
-                    console.error('Erro ao adicionar roteador:', error);
+                    console.error('Erro ao adicionar roteador:', error); // **Adicionado console.error para depuração**
                     showFeedback('Erro ao adicionar roteador: ' + error.message, 'red');
                 })
                 .finally(() => {
@@ -719,15 +746,20 @@
                 .then((userCredential) => {
                     // Login bem-sucedido
                     loginError.classList.add('hidden');
-                    isAdmin = true;
-                    loginScreen.classList.add('hidden');
-                    adminControls.classList.remove('hidden');
-                    adminLoginBtn.classList.add('hidden');
-                    renderRouters(); // Re-renderiza para mostrar controles de admin
+                    // isAdmin = true; // Isso é feito pelo onAuthStateChanged
+                    // loginScreen.classList.add('hidden'); // Isso é feito pelo onAuthStateChanged
+                    // adminControls.classList.remove('hidden'); // Isso é feito pelo onAuthStateChanged
+                    // adminLoginBtn.classList.add('hidden'); // Isso é feito pelo onAuthStateChanged
+                    // renderRouters(); // Re-renderiza para mostrar controles de admin
                 })
                 .catch((error) => {
-                    // Mostra erro de credenciais inválidas
-                    loginError.textContent = "Credenciais inválidas. Por favor, tente novamente.";
+                    console.error('Erro de login:', error); // Log do erro
+                    // Melhora a mensagem de erro para o usuário
+                    if (error.code === 'auth/invalid-email' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+                        loginError.textContent = "Credenciais inválidas. Verifique seu e-mail e senha.";
+                    } else {
+                        loginError.textContent = `Erro ao fazer login: ${error.message}`;
+                    }
                     loginError.classList.remove('hidden');
                 })
                 .finally(() => {
@@ -742,13 +774,17 @@
         logoutBtn.addEventListener('click', () => {
             firebase.signOut(auth)
                 .then(() => {
-                    isAdmin = false;
-                    adminControls.classList.add('hidden');
-                    adminLoginBtn.classList.remove('hidden');
-                    renderRouters(); // Re-renderiza para esconder controles de admin
+                    // isAdmin = false; // Isso é feito pelo onAuthStateChanged
+                    // adminControls.classList.add('hidden'); // Isso é feito pelo onAuthStateChanged
+                    // adminLoginBtn.classList.remove('hidden'); // Isso é feito pelo onAuthStateChanged
+                    // renderRouters(); // Re-renderiza para esconder controles de admin
                     showFeedback('Você saiu da conta administrativa', 'blue');
+                    // Ao deslogar, força a exibição da tela de login para um novo acesso administrativo
+                    loginScreen.classList.remove('hidden'); 
+                    mainContent.classList.add('hidden'); // Esconde o conteúdo principal
                 })
                 .catch((error) => {
+                    console.error('Erro ao sair:', error); // Log do erro
                     showFeedback('Erro ao sair: ' + error.message, 'red');
                 });
         });
@@ -756,6 +792,7 @@
         // Botão para acessar a tela de login admin
         adminLoginBtn.addEventListener('click', () => {
             loginScreen.classList.remove('hidden');
+            mainContent.classList.add('hidden'); // Esconde o conteúdo principal ao ir para o login
             // Limpa os campos ao abrir o login
             loginEmail.value = '';
             loginPassword.value = '';
@@ -765,13 +802,13 @@
         // Botão para voltar à visualização pública
         publicViewBtn.addEventListener('click', () => {
             loginScreen.classList.add('hidden');
+            mainContent.classList.remove('hidden'); // Mostra o conteúdo principal
         });
         
-        // Inicialização da página
-        function init() {
-            // Mostra conteúdo principal para todos
-            mainContent.classList.remove('hidden');
-        }
+        // Inicialização da página (removido o init() e integrado ao onAuthStateChanged)
+        // A visibilidade inicial do mainContent deve ser controlada pelo onAuthStateChanged
+        // ou pela classe 'hidden' inicial no HTML.
+        // A lógica do onAuthStateChanged já cuida disso.
         
         // Torna a função global para ser usada nos elementos
         window.togglePasswordVisibility = togglePasswordVisibility;
