@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monitor de Status</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .status-card {
+            transition: all 0.3s ease;
+            transform-style: preserve-3d;
+        }
+        .status-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        .em-uso {
+            background-color: #4ade80;
+        }
+        .recolhido {
+            background-color: #f87171;
+        }
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: #4ade80;
+        }
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <header class="mb-10 text-center">
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">Monitor de Status</h1>
+            <p class="text-gray-600">Monitore e gerencie o status de equipamentos em tempo real</p>
+            <div class="mt-6 flex justify-center gap-4">
+                <div class="flex items-center">
+                    <div class="w-4 h-4 rounded-full bg-green-500 mr-2"></div>
+                    <span class="text-sm">Em Uso</span>
+                </div>
+                <div class="flex items-center">
+                    <div class="w-4 h-4 rounded-full bg-red-500 mr-2"></div>
+                    <span class="text-sm">Recolhido</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="mb-8 flex flex-col md:flex-row justify-between items-center">
+            <div class="stats shadow bg-white p-4 rounded-lg mb-4 md:mb-0">
+                <div class="stat">
+                    <div class="stat-title">Total de Itens</div>
+                    <div class="stat-value text-indigo-600" id="totalUsers">0</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-title">Em Uso</div>
+                    <div class="stat-value text-green-600" id="onlineCount">0</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-title">Recolhido</div>
+                    <div class="stat-value text-red-600" id="offlineCount">0</div>
+                </div>
+            </div>
+
+            <div class="flex items-center">
+                <div class="relative">
+                    <input type="text" id="searchInput" placeholder="Pesquisar itens..." 
+                           class="pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                </div>
+                <button id="addUserBtn" class="ml-4 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">
+                    <i class="fas fa-plus mr-2"></i>Adicionar Item
+                </button>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6" id="usersContainer">
+            <!-- User cards will be added here dynamically -->
+        </div>
+
+        <!-- Add User Modal -->
+        <div id="addUserModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
+            <div class="bg-white rounded-lg p-6 w-full max-w-md">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-semibold">Adicionar Novo Item</h3>
+                    <button id="closeModalBtn" class="text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="mb-4">
+                    <label for="userName" class="block text-sm font-medium text-gray-700 mb-1">Nome do Item</label>
+                    <input type="text" id="userName" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Status Inicial</label>
+                    <div class="flex items-center space-x-4">
+                        <label class="inline-flex items-center">
+                            <input type="radio" name="initialStatus" value="em-uso" checked class="form-radio text-indigo-600">
+                            <span class="ml-2">Em Uso</span>
+                        </label>
+                        <label class="inline-flex items-center">
+                            <input type="radio" name="initialStatus" value="recolhido" class="form-radio text-indigo-600">
+                            <span class="ml-2">Recolhido</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-3">
+                    <button id="cancelAddBtn" class="px-4 py-2 border rounded-lg hover:bg-gray-100">Cancelar</button>
+                    <button id="confirmAddBtn" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Adicionar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Sample initial data
+            const initialUsers = [
+                { id: 1, name: 'Notebook Dell', status: 'em-uso' },
+                { id: 2, name: 'Tablet Samsung', status: 'recolhido' },
+                { id: 3, name: 'Projetor Epson', status: 'em-uso' },
+                { id: 4, name: 'Câmera Canon', status: 'em-uso' },
+                { id: 5, name: 'Microfone Shure', status: 'recolhido' },
+                { id: 6, name: 'Tripé Manfrotto', status: 'recolhido' },
+                { id: 7, name: 'HD Externo', status: 'em-uso' },
+                { id: 8, name: 'Mouse Logitech', status: 'em-uso' },
+                { id: 9, name: 'Teclado Microsoft', status: 'recolhido' },
+                { id: 10, name: 'Monitor LG', status: 'em-uso' }
+            ];
+
+            let users = [...initialUsers];
+            let nextId = initialUsers.length + 1;
+
+            // DOM elements
+            const usersContainer = document.getElementById('usersContainer');
+            const totalUsersElement = document.getElementById('totalUsers');
+            const onlineCountElement = document.getElementById('onlineCount');
+            const offlineCountElement = document.getElementById('offlineCount');
+            const searchInput = document.getElementById('searchInput');
+            const addUserBtn = document.getElementById('addUserBtn');
+            const addUserModal = document.getElementById('addUserModal');
+            const closeModalBtn = document.getElementById('closeModalBtn');
+            const cancelAddBtn = document.getElementById('cancelAddBtn');
+            const confirmAddBtn = document.getElementById('confirmAddBtn');
+            const userNameInput = document.getElementById('userName');
+
+            // Render users
+            function renderUsers(usersToRender) {
+                usersContainer.innerHTML = '';
+                
+                usersToRender.forEach(user => {
+                    const userCard = document.createElement('div');
+                    userCard.className = `status-card bg-white rounded-lg p-4 shadow-md flex flex-col items-center justify-between ${user.status}`;
+                    userCard.dataset.id = user.id;
+                    
+                    userCard.innerHTML = `
+                        <div class="text-center mb-4">
+                            <div class="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center mx-auto mb-3 text-2xl font-bold text-gray-600">
+                                ${user.name.charAt(0).toUpperCase()}
+                            </div>
+                            <h3 class="font-semibold text-gray-800">${user.name}</h3>
+                            <p class="text-sm ${user.status === 'em-uso' ? 'text-green-600' : 'text-red-600'}">
+                                ${user.status === 'em-uso' ? 'Em Uso' : 'Recolhido'}
+                            </p>
+                        </div>
+                        <div class="flex items-center justify-between w-full">
+                            <label class="toggle-switch">
+                                <input type="checkbox" ${user.status === 'em-uso' ? 'checked' : ''} class="status-toggle">
+                                <span class="slider"></span>
+                            </label>
+                            <button class="delete-btn text-gray-500 hover:text-red-500">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    `;
+                    
+                    usersContainer.appendChild(userCard);
+                });
+
+                updateCounters();
+                
+                // Add event listeners to toggles
+                document.querySelectorAll('.status-toggle').forEach(toggle => {
+                    toggle.addEventListener('change', function() {
+                        const userId = parseInt(this.closest('.status-card').dataset.id);
+                        const user = users.find(u => u.id === userId);
+                        user.status = this.checked ? 'em-uso' : 'recolhido';
+                        
+                        // Update the card class
+                        const card = this.closest('.status-card');
+                        card.classList.remove('em-uso', 'recolhido');
+                        card.classList.add(user.status);
+                        
+                        // Update the status text
+                        const statusText = card.querySelector('p');
+                        statusText.textContent = user.status === 'em-uso' ? 'Em Uso' : 'Recolhido';
+                        statusText.className = `text-sm ${user.status === 'em-uso' ? 'text-green-600' : 'text-red-600'}`;
+                        
+                        updateCounters();
+                    });
+                });
+                
+                // Add event listeners to delete buttons
+                document.querySelectorAll('.delete-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const userId = parseInt(this.closest('.status-card').dataset.id);
+                        users = users.filter(u => u.id !== userId);
+                        renderUsers(users);
+                    });
+                });
+            }
+
+            // Update counters
+            function updateCounters() {
+                const emUsoCount = users.filter(u => u.status === 'em-uso').length;
+                const recolhidoCount = users.filter(u => u.status === 'recolhido').length;
+                
+                totalUsersElement.textContent = users.length;
+                onlineCountElement.textContent = emUsoCount;
+                offlineCountElement.textContent = recolhidoCount;
+            }
+
+            // Search functionality
+            searchInput.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase();
+                const filteredUsers = users.filter(user => 
+                    user.name.toLowerCase().includes(searchTerm)
+                );
+                renderUsers(filteredUsers);
+            });
+
+            // Add user modal
+            addUserBtn.addEventListener('click', function() {
+                addUserModal.classList.remove('hidden');
+                userNameInput.focus();
+            });
+
+            closeModalBtn.addEventListener('click', closeModal);
+            cancelAddBtn.addEventListener('click', closeModal);
+
+            function closeModal() {
+                addUserModal.classList.add('hidden');
+                userNameInput.value = '';
+            }
+
+            confirmAddBtn.addEventListener('click', function() {
+                const name = userNameInput.value.trim();
+                if (!name) return;
+                
+                const status = document.querySelector('input[name="initialStatus"]:checked').value;
+                
+                const newUser = {
+                    id: nextId++,
+                    name,
+                    status
+                };
+                
+                users.push(newUser);
+                renderUsers(users);
+                closeModal();
+            });
+
+            // Initial render
+            renderUsers(users);
+        });
+    </script>
+</body>
+</html>
