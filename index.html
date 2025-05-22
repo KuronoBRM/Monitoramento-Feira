@@ -666,19 +666,25 @@
                 lastUpdate: new Date().toISOString()
             };
             
-            // CORREÇÃO: Criamos uma nova referência com push e depois usamos set
+            // Cria uma nova referência com push
             const newRouterRef = firebase.push(firebase.ref(firebase.database, 'routers'));
             
             firebase.set(newRouterRef, newRouter)
                 .then(() => {
                     showFeedback('Roteador adicionado com sucesso!', 'green');
                     addRouterModal.classList.add('hidden');
+                    
+                    // Limpa os campos após adicionar
+                    routerNameInput.value = '';
+                    routerSSIDInput.value = '';
+                    routerPasswordInput.value = '';
                 })
                 .catch((error) => {
+                    console.error('Erro ao adicionar roteador:', error);
                     showFeedback('Erro ao adicionar roteador: ' + error.message, 'red');
                 })
                 .finally(() => {
-                    // Restaura o botão
+                    // Restaura o botão independente de sucesso ou falha
                     confirmBtnText.textContent = 'Adicionar';
                     confirmBtnSpinner.classList.add('hidden');
                     confirmAddRouterBtn.disabled = false;
