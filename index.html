@@ -411,8 +411,8 @@
         const recolhidoCountElement = document.getElementById('recolhidoCount');
         const emUsoPercentElement = document.getElementById('emUsoPercent');
         const recolhidoPercentElement = document.getElementById('recolhidoPercent');
-        const emUsoChartElement = document.getElementById('emUsoChart'); // Novo elemento
-        const recolhidoChartElement = document.getElementById('recolhidoChart'); // Novo elemento
+        const emUsoChartElement = document.getElementById('emUsoChart'); 
+        const recolhidoChartElement = document.getElementById('recolhidoChart'); 
         
         // Variável para armazenar as ONUs
         let routers = {};
@@ -450,7 +450,7 @@
             firebase.onValue(routersRef, (snapshot) => {
                 routers = snapshot.val() || {};
                 renderRouters(); 
-                updateStats(); // Atualiza stats cada vez que os dados mudam
+                updateStats(); 
             });
 
             // Adiciona event listener para o campo de pesquisa
@@ -508,7 +508,6 @@
                 if (isAdmin && !searchTerm) {
                     const addFirstRouterBtn = document.getElementById('addFirstRouterBtn');
                     if (addFirstRouterBtn) {
-                        // Remove listener antes de adicionar para evitar duplicatas
                         addFirstRouterBtn.removeEventListener('click', () => addRouterBtn.click());
                         addFirstRouterBtn.addEventListener('click', () => addRouterBtn.click());
                     }
@@ -520,13 +519,10 @@
             
             routersContainer.innerHTML = '';
             
-            // Ordena as ONUs: ativos primeiro, depois recolhidos, ambos por nome
             const sortedRouters = filteredRouters.sort(([idA, routerA], [idB, routerB]) => {
-                // Se status é diferente, ativos (true) vêm primeiro
                 if (routerA.status !== routerB.status) {
                     return routerB.status - routerA.status; 
                 }
-                // Se status é igual, ordena por nome
                 return routerA.name.localeCompare(routerB.name);
             });
 
@@ -581,7 +577,6 @@
                     ` : ''}
                 `;
                 
-                // Definir valores dos inputs para admin (depois de innerHTML)
                 if (isAdmin) {
                     const ssidInput = routerElement.querySelector('.ssid-input');
                     if (ssidInput) ssidInput.value = router.ssid;
@@ -592,7 +587,6 @@
                 routersContainer.appendChild(routerElement);
             });
             
-            // Adiciona event listeners para os elementos recém-criados (apenas para admin)
             if (isAdmin) {
                 addEventListeners();
             }
@@ -603,7 +597,6 @@
         function addEventListeners() {
             // Toggle status
             document.querySelectorAll('.status-toggle').forEach(toggle => {
-                // Remove listener antes de adicionar para evitar duplicatas
                 toggle.removeEventListener('change', handleStatusToggle); 
                 toggle.addEventListener('change', function() { handleStatusToggle(this.dataset.id, this.checked); });
             });
@@ -629,25 +622,19 @@
 
         // Handlers para os eventos
         function handleStatusToggle(id, newStatus) {
-            // Atualiza localmente primeiro para feedback imediato
             if (routers[id]) { 
                 routers[id].status = newStatus;
                 routers[id].lastUpdate = new Date().toISOString();
             }
             
-            // Atualiza no Firebase
             const routerRef = firebase.ref(firebase.database, `routers/${id}`);
             firebase.set(routerRef, routers[id])
                 .then(() => {
                     showFeedback(`Status da ONU "${routers[id].name}" atualizado!`, 'green');
-                    // Não chamamos renderRouters() aqui, o onValue do Firebase fará isso.
-                    // Isso evita re-renderizações duplas e garante que o estado do Firebase seja a fonte da verdade.
                 })
                 .catch((error) => {
                     console.error('Erro ao atualizar status:', error); 
                     showFeedback('Erro ao atualizar status: ' + error.message, 'red');
-                    // Reverte a mudança local em caso de erro
-                    // Find the toggle element and revert its checked state
                     const toggleElement = document.querySelector(`.status-toggle[data-id="${id}"]`);
                     if (toggleElement) {
                         toggleElement.checked = !newStatus;
@@ -658,7 +645,6 @@
         function handleSSIDChange(id, newSSID) {
             if (newSSID.trim() === '') {
                 showFeedback('O SSID não pode estar vazio', 'red');
-                // Reverte o valor do input se o SSID for vazio
                 const ssidInput = document.querySelector(`.ssid-input[data-id="${id}"]`);
                 if (ssidInput && routers[id]) {
                     ssidInput.value = routers[id].ssid;
