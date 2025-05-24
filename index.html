@@ -200,6 +200,24 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+
+        /* Estilo para o medidor circular */
+        .pie-chart {
+            width: 20px; /* Tamanho pequeno */
+            height: 20px;
+            border-radius: 50%;
+            background-color: #e0e0e0; /* Cor de fundo padrão */
+            position: relative;
+            overflow: hidden; /* Garante que o gradiente seja cortado em círculo */
+        }
+
+        .pie-chart.green {
+            background-image: conic-gradient(#4ade80 var(--percent), #e0e0e0 var(--percent));
+        }
+
+        .pie-chart.red {
+            background-image: conic-gradient(#f87171 var(--percent), #e0e0e0 var(--percent));
+        }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
@@ -261,21 +279,27 @@
                 </div>
             </header>
 
-            <div class="mb-5 flex flex-col lg:flex-row justify-between items-stretch gap-4"> 
-                <div class="stats shadow bg-white p-3 rounded-lg w-full"> 
-                    <div class="stat text-center">
+            <div class="mb-5 flex flex-col lg:flex-row justify-between items-center gap-4"> 
+                <div class="stats shadow bg-white p-3 rounded-lg w-full flex flex-wrap justify-around items-center"> 
+                    <div class="stat text-center p-2 flex flex-col items-center">
                         <div class="stat-title text-xs">Total de Roteadores</div> 
                         <div class="stat-value text-indigo-600 text-lg" id="totalRouters">0</div> 
                         <div class="stat-desc text-xs">Dispositivos cadastrados</div> 
                     </div>
-                    <div class="stat text-center">
+                    <div class="stat text-center p-2 flex flex-col items-center">
                         <div class="stat-title text-xs">Em Uso</div>
-                        <div class="stat-value text-green-600 text-lg" id="emUsoCount">0</div>
+                        <div class="stat-value text-green-600 text-lg flex items-center gap-1">
+                            <span id="emUsoCount">0</span>
+                            <div class="pie-chart green" id="emUsoChart" style="--percent: 0%;"></div>
+                        </div>
                         <div class="stat-desc text-xs"><span id="emUsoPercent">0</span>% operando</div>
                     </div>
-                    <div class="stat text-center">
+                    <div class="stat text-center p-2 flex flex-col items-center">
                         <div class="stat-title text-xs">Recolhido</div>
-                        <div class="stat-value text-red-600 text-lg" id="recolhidoCount">0</div>
+                        <div class="stat-value text-red-600 text-lg flex items-center gap-1">
+                            <span id="recolhidoCount">0</span>
+                            <div class="pie-chart red" id="recolhidoChart" style="--percent: 0%;"></div>
+                        </div>
                         <div class="stat-desc text-xs"><span id="recolhidoPercent">0</span>% inativos</div>
                     </div>
                 </div>
@@ -387,6 +411,8 @@
         const recolhidoCountElement = document.getElementById('recolhidoCount');
         const emUsoPercentElement = document.getElementById('emUsoPercent');
         const recolhidoPercentElement = document.getElementById('recolhidoPercent');
+        const emUsoChartElement = document.getElementById('emUsoChart'); // Novo elemento
+        const recolhidoChartElement = document.getElementById('recolhidoChart'); // Novo elemento
         
         // Variável para armazenar os roteadores
         let routers = {};
@@ -410,14 +436,12 @@
                     mainContent.classList.remove('hidden');
                     adminControls.classList.remove('hidden');
                     adminLoginBtn.classList.add('hidden');
-                    console.log("Usuário logado. isAdmin:", isAdmin); 
                 } else {
                     isAdmin = false;
                     loginScreen.classList.add('hidden'); 
                     mainContent.classList.remove('hidden'); 
                     adminControls.classList.add('hidden'); 
                     adminLoginBtn.classList.remove('hidden'); 
-                    console.log("Usuário não logado. isAdmin:", isAdmin); 
                 }
                 renderRouters(); 
             });
@@ -450,6 +474,14 @@
             recolhidoCountElement.textContent = recolhido;
             emUsoPercentElement.textContent = emUsoPercent;
             recolhidoPercentElement.textContent = recolhidoPercent;
+
+            // Atualiza o estilo do medidor circular
+            if (emUsoChartElement) {
+                emUsoChartElement.style.setProperty('--percent', `${emUsoPercent}%`);
+            }
+            if (recolhidoChartElement) {
+                recolhidoChartElement.style.setProperty('--percent', `${recolhidoPercent}%`);
+            }
         }
         
         // Função para renderizar os roteadores
