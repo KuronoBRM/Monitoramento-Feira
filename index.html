@@ -266,7 +266,7 @@
                         </button>
                     </div>
                 </div>
-                <p class="text-gray-600 text-xs">Controle dos roteadores e configurações de WiFi</p> 
+                <p class="text-gray-600 text-xs">Controle das ONUs e configurações de WiFi</p> 
                 <div class="mt-3 flex justify-center gap-3 text-xs"> 
                     <div class="flex items-center">
                         <div class="w-2.5 h-2.5 rounded-full bg-green-500 mr-1.5"></div> 
@@ -282,7 +282,7 @@
             <div class="mb-5 flex flex-col lg:flex-row justify-between items-center gap-4"> 
                 <div class="stats shadow bg-white p-3 rounded-lg w-full flex flex-wrap justify-around items-center"> 
                     <div class="stat text-center p-2 flex flex-col items-center">
-                        <div class="stat-title text-xs">Total de Roteadores</div> 
+                        <div class="stat-title text-xs">Total de ONUs</div> 
                         <div class="stat-value text-indigo-600 text-lg" id="totalRouters">0</div> 
                         <div class="stat-desc text-xs">Dispositivos cadastrados</div> 
                     </div>
@@ -307,12 +307,12 @@
 
             <div class="mb-5 flex flex-col sm:flex-row items-center gap-3 w-full"> 
                 <div class="relative w-full sm:w-60"> 
-                    <input type="text" id="searchInput" placeholder="Pesquisar roteador..." class="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 pl-9"> 
+                    <input type="text" id="searchInput" placeholder="Pesquisar ONU..." class="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 pl-9"> 
                     <i class="fas fa-search text-gray-400 absolute left-2.5 top-1/2 transform -translate-y-1/2 text-sm"></i> 
                 </div>
                 <div id="adminControls" class="hidden flex gap-2 w-full sm:w-auto"> 
                     <button id="addRouterBtn" class="btn bg-indigo-600 text-white hover:bg-indigo-700 flex items-center justify-center gap-1 px-3 py-1.5 text-sm rounded w-full sm:w-auto"> 
-                        <i class="fas fa-plus"></i> Adicionar Roteador
+                        <i class="fas fa-plus"></i> Adicionar ONU
                     </button>
                     <button id="logoutBtn" class="btn bg-gray-600 text-white hover:bg-gray-700 flex items-center justify-center gap-1 px-3 py-1.5 text-sm rounded w-full sm:w-auto"> 
                         <i class="fas fa-sign-out-alt"></i> Sair
@@ -323,21 +323,21 @@
             <div class="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-3" id="routersContainer"> 
                 <div class="col-span-full text-center py-8"> 
                     <div class="loading-spinner mx-auto mb-3"></div> 
-                    <p class="text-gray-500 text-sm">Carregando roteadores...</p> 
+                    <p class="text-gray-500 text-sm">Carregando ONUs...</p> 
                 </div>
             </div>
 
             <div id="addRouterModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
                 <div class="bg-white rounded-lg p-5 w-full max-w-md"> 
                     <div class="flex justify-between items-center mb-3"> 
-                        <h3 class="text-lg font-bold">Adicionar Novo Roteador</h3> 
+                        <h3 class="text-lg font-bold">Adicionar Nova ONU</h3> 
                         <button id="closeModalBtn" class="text-gray-500 hover:text-gray-700">
                             <i class="fas fa-times text-base"></i> 
                         </button>
                     </div>
                     <div class="space-y-2"> 
                         <div>
-                            <label class="block text-xs font-medium text-gray-500 mb-0.5">Nome do Roteador</label> 
+                            <label class="block text-xs font-medium text-gray-500 mb-0.5">Nome da ONU</label> 
                             <input type="text" id="routerNameInput" class="w-full px-2 py-1.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
                         </div>
                         <div>
@@ -414,7 +414,7 @@
         const emUsoChartElement = document.getElementById('emUsoChart'); // Novo elemento
         const recolhidoChartElement = document.getElementById('recolhidoChart'); // Novo elemento
         
-        // Variável para armazenar os roteadores
+        // Variável para armazenar as ONUs
         let routers = {};
         let isAdmin = false; 
         
@@ -484,7 +484,7 @@
             }
         }
         
-        // Função para renderizar os roteadores
+        // Função para renderizar as ONUs
         function renderRouters() {
             const searchTerm = searchInput.value.toLowerCase(); 
 
@@ -498,9 +498,9 @@
                 routersContainer.innerHTML = `
                     <div class="col-span-full text-center py-8">
                         <i class="fas fa-wifi text-gray-300 text-4xl mb-4"></i>
-                        <p class="text-gray-500 text-sm">${searchTerm ? 'Nenhum roteador encontrado com o termo de pesquisa.' : 'Nenhum roteador cadastrado.'}</p>
+                        <p class="text-gray-500 text-sm">${searchTerm ? 'Nenhuma ONU encontrada com o termo de pesquisa.' : 'Nenhuma ONU cadastrada.'}</p>
                         ${isAdmin && !searchTerm ? `<button id="addFirstRouterBtn" class="mt-4 bg-indigo-600 text-white font-bold py-2 px-4 rounded hover:bg-indigo-700 text-sm">
-                            <i class="fas fa-plus mr-2"></i>Adicionar Primeiro Roteador
+                            <i class="fas fa-plus mr-2"></i>Adicionar Primeira ONU
                         </button>` : ''}
                     </div>
                 `;
@@ -520,7 +520,7 @@
             
             routersContainer.innerHTML = '';
             
-            // Ordena os roteadores: ativos primeiro, depois recolhidos, ambos por nome
+            // Ordena as ONUs: ativos primeiro, depois recolhidos, ambos por nome
             const sortedRouters = filteredRouters.sort(([idA, routerA], [idB, routerB]) => {
                 // Se status é diferente, ativos (true) vêm primeiro
                 if (routerA.status !== routerB.status) {
@@ -620,7 +620,7 @@
                 input.addEventListener('change', function() { handlePasswordChange(this.dataset.id, this.value); });
             });
             
-            // Remover roteador
+            // Remover ONU
             document.querySelectorAll('.delete-router-btn').forEach(btn => {
                 btn.removeEventListener('click', handleDeleteRouter); 
                 btn.addEventListener('click', function() { handleDeleteRouter(this.dataset.id, this); });
@@ -639,7 +639,7 @@
             const routerRef = firebase.ref(firebase.database, `routers/${id}`);
             firebase.set(routerRef, routers[id])
                 .then(() => {
-                    showFeedback(`Status do roteador "${routers[id].name}" atualizado!`, 'green');
+                    showFeedback(`Status da ONU "${routers[id].name}" atualizado!`, 'green');
                     // Não chamamos renderRouters() aqui, o onValue do Firebase fará isso.
                     // Isso evita re-renderizações duplas e garante que o estado do Firebase seja a fonte da verdade.
                 })
@@ -674,7 +674,7 @@
             const routerRef = firebase.ref(firebase.database, `routers/${id}`);
             firebase.set(routerRef, routers[id])
                 .then(() => {
-                    showFeedback(`SSID do roteador "${routers[id].name}" atualizado!`, 'green');
+                    showFeedback(`SSID da ONU "${routers[id].name}" atualizado!`, 'green');
                 })
                 .catch((error) => {
                     console.error('Erro ao atualizar SSID:', error); 
@@ -695,7 +695,7 @@
             const routerRef = firebase.ref(firebase.database, `routers/${id}`);
             firebase.set(routerRef, routers[id])
                 .then(() => {
-                    showFeedback(`Senha do roteador "${routers[id].name}" atualizada!`, 'green');
+                    showFeedback(`Senha da ONU "${routers[id].name}" atualizada!`, 'green');
                 })
                 .catch((error) => {
                     console.error('Erro ao atualizar senha:', error); 
@@ -708,9 +708,9 @@
         }
 
         function handleDeleteRouter(id, buttonElement) {
-            const routerName = routers[id] ? routers[id].name : 'Roteador Desconhecido';
+            const routerName = routers[id] ? routers[id].name : 'ONU Desconhecida';
             
-            if (confirm(`Tem certeza que deseja remover o roteador "${routerName}"?`)) {
+            if (confirm(`Tem certeza que deseja remover a ONU "${routerName}"?`)) {
                 const routerRef = firebase.ref(firebase.database, `routers/${id}`);
                 
                 const originalText = buttonElement.innerHTML;
@@ -719,11 +719,11 @@
                 
                 firebase.remove(routerRef)
                     .then(() => {
-                        showFeedback(`Roteador "${routerName}" removido com sucesso!`, 'green');
+                        showFeedback(`ONU "${routerName}" removida com sucesso!`, 'green');
                     })
                     .catch((error) => {
-                        console.error('Erro ao remover roteador:', error); 
-                        showFeedback('Erro ao remover roteador: ' + error.message, 'red');
+                        console.error('Erro ao remover ONU:', error); 
+                        showFeedback('Erro ao remover ONU: ' + error.message, 'red');
                         buttonElement.innerHTML = originalText;
                         buttonElement.disabled = false;
                     });
@@ -789,7 +789,7 @@
             const status = routerStatusInput.checked;
             
             if (!name || !ssid) {
-                showFeedback('Por favor, preencha pelo menos o nome e o SSID do roteador.', 'red');
+                showFeedback('Por favor, preencha pelo menos o nome e o SSID da ONU.', 'red');
                 return;
             }
             
@@ -809,7 +809,7 @@
             
             firebase.set(newRouterRef, newRouter)
                 .then(() => {
-                    showFeedback('Roteador adicionado com sucesso!', 'green');
+                    showFeedback('ONU adicionada com sucesso!', 'green');
                     addRouterModal.classList.add('hidden');
                     
                     routerNameInput.value = '';
@@ -817,8 +817,8 @@
                     routerPasswordInput.value = '';
                 })
                 .catch((error) => {
-                    console.error('Erro ao adicionar roteador:', error); 
-                    showFeedback('Erro ao adicionar roteador: ' + error.message, 'red');
+                    console.error('Erro ao adicionar ONU:', error); 
+                    showFeedback('Erro ao adicionar ONU: ' + error.message, 'red');
                 })
                 .finally(() => {
                     confirmBtnText.textContent = 'Adicionar';
